@@ -10,7 +10,7 @@ def load_data():
     # Substitueix això per la teva font real de dades (csv, excel, parquet...)
     # Exemple: return pd.read_csv("df2.csv")
     # Exemple: return pd.read_excel("dades.xlsx")
-    return pd.read_csv("df2.csv")
+    return pd.read_csv("data_flourish_histo26_rs.csv")
 
 
 df2 = load_data()
