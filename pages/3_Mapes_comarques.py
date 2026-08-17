@@ -237,25 +237,26 @@ else:
         "PROD_IRTA(t/ha)_S" if "PROD_IRTA(t/ha)_S" in variables_disponibles else variables_disponibles[-1]
     )
 
-    col_a, col_b = st.columns(2)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
 
-    with col_a:
-        st.markdown("**Mapa esquerre**")
-        campanya_esq = st.selectbox("Campanya", options=totes_campanyes, key="campanya_esq")
-        cultiu_esq = st.selectbox("Cultiu", options=tots_cultius, key="cultiu_esq")
+    with col1:
+        campanya_esq = st.selectbox("Campanya (esq.)", options=totes_campanyes, key="campanya_esq")
+    with col2:
+        cultiu_esq = st.selectbox("Cultiu (esq.)", options=tots_cultius, key="cultiu_esq")
+    with col3:
         variable_esq = st.selectbox(
-            "Variable",
+            "Variable (esq.)",
             options=variables_disponibles,
             index=variables_disponibles.index(default_esq),
             key="variable_esq",
         )
-
-    with col_b:
-        st.markdown("**Mapa dret**")
-        campanya_dre = st.selectbox("Campanya", options=totes_campanyes, key="campanya_dre")
-        cultiu_dre = st.selectbox("Cultiu", options=tots_cultius, key="cultiu_dre")
+    with col4:
+        campanya_dre = st.selectbox("Campanya (dre.)", options=totes_campanyes, key="campanya_dre")
+    with col5:
+        cultiu_dre = st.selectbox("Cultiu (dre.)", options=tots_cultius, key="cultiu_dre")
+    with col6:
         variable_dre = st.selectbox(
-            "Variable",
+            "Variable (dre.)",
             options=variables_disponibles,
             index=variables_disponibles.index(default_dre),
             key="variable_dre",
