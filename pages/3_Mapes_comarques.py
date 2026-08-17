@@ -135,12 +135,78 @@ def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, 
     js_sense = json.dumps(trace_sense)[:-1] + ', "geojson": geojson}'
     return f"[{js_amb}, {js_sense}]"
 
+
+# --- Construcció del nom de variable a partir de 3 tries ---
+TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
+
+
+def nom_variable(tipus_codi, empresa, reg_sec):
+    if tipus_codi == "ha":
+        return f"HA_{empresa}_{reg_sec}"
+    elif tipus_codi == "t":
+        return f"PROD_{empresa}(t)_{reg_sec}"
+    else:  # "t/ha"
+        return f"PROD_{empresa}(t/ha)_{reg_sec}"
+
+
+def panell_variable(key_prefix, tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"):
+    """Panell plegable: Tipus (Superfície/Producció/Rendiment) + Reg./Secà + Font.
+    Retorna el nom real de la columna resultant, p.ex. 'PROD_IRTA(t/ha)_R'."""
+    with st.expander("🔧 Variable", expanded=True):
+        tipus_label = st.segmented_control(
+            "Tipus de variable",
+            options=list(TIPUS_CODIS.keys()),
+            default=tipus_default,
+            key=f"tipus_{key_prefix}",
+        )
+        if tipus_label is None:
+            tipus_label = tipus_default
+
+        c1, c2 = st.columns(2)
+        with c1:
+            reg_sec = st.segmented_control(
+                "Regadiu / Secà",
+                options=["R", "S"],
+                default=reg_sec_default,
+                key=f"regsec_{key_prefix}",
+            )
+        with c2:
+            empresa = st.segmented_control(
+                "Font",
+                options=["IRTA", "DARPA"],
+                default=empresa_default,
+                key=f"empresa_{key_prefix}",
+            )
+        if reg_sec is None:
+            reg_sec = reg_sec_default
+        if empresa is None:
+            empresa = empresa_default
+
+        variable = nom_variable(TIPUS_CODIS[tipus_label], empresa, reg_sec)
+        st.caption(f"→ `{variable}`")
+    return variable
+
+
+def slider_campanya(key_prefix, totes_campanyes):
+    minim, maxim = int(min(totes_campanyes)), int(max(totes_campanyes))
+    return st.slider(
+        "Campanya", min_value=minim, max_value=maxim, value=maxim, step=1, key=f"campanya_{key_prefix}"
+    )
+
+
+def selector_cultiu(key_prefix, tots_cultius):
+    default = tots_cultius[0]
+    valor = st.segmented_control(
+        "Cultiu", options=tots_cultius, default=default, key=f"cultiu_{key_prefix}"
+    )
+    return valor if valor is not None else default
+
+
 st.title("Mapa de comarques")
 
 variables_disponibles = [
     c for c in df2.columns if c not in ["COMARCA", "CULTIU", "CAMPANYA"]
 ]
-default_var = "PROD_IRTA(t/ha)_R"
 totes_comarques = sorted(df2["COMARCA"].dropna().unique())
 totes_campanyes = sorted(df2["CAMPANYA"].dropna().unique(), reverse=True)
 tots_cultius = sorted(df2["CULTIU"].dropna().unique())
@@ -157,19 +223,13 @@ comparar = st.checkbox("Comparar dues variables costat a costat")
 
 if not comparar:
     # --- Mode senzill: selectors compartits, un sol mapa (com fins ara) ---
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
-        campanya_sel = st.selectbox("Campanya", options=totes_campanyes)
+        cultiu_sel = selector_cultiu("unic", tots_cultius)
     with col2:
-        cultiu_sel = st.selectbox("Cultiu", options=tots_cultius)
-    with col3:
-        variable_sel = st.selectbox(
-            "Variable pel color del mapa",
-            options=variables_disponibles,
-            index=variables_disponibles.index(default_var)
-            if default_var in variables_disponibles
-            else 0,
-        )
+        campanya_sel = slider_campanya("unic", totes_campanyes)
+
+    variable_sel = panell_variable("unic")
 
     df_map = construeix_df_map(campanya_sel, cultiu_sel, totes_comarques)
     df_amb_dada = df_map[df_map[variable_sel].notna()]
@@ -231,35 +291,23 @@ if not comparar:
             st.write(df_sense_dada["COMARCA"].tolist())
 
 else:
-    # --- Mode comparació: cada banda amb la seva pròpia campanya/cultiu/comarques/variable ---
-    default_esq = default_var if default_var in variables_disponibles else variables_disponibles[0]
-    default_dre = (
-        "PROD_IRTA(t/ha)_S" if "PROD_IRTA(t/ha)_S" in variables_disponibles else variables_disponibles[-1]
-    )
+    # --- Mode comparació: cada banda amb la seva pròpia campanya/cultiu/variable ---
+    col_a, col_b = st.columns(2)
 
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-
-    with col1:
-        campanya_esq = st.selectbox("Campanya (esq.)", options=totes_campanyes, key="campanya_esq")
-    with col2:
-        cultiu_esq = st.selectbox("Cultiu (esq.)", options=tots_cultius, key="cultiu_esq")
-    with col3:
-        variable_esq = st.selectbox(
-            "Variable (esq.)",
-            options=variables_disponibles,
-            index=variables_disponibles.index(default_esq),
-            key="variable_esq",
+    with col_a:
+        st.markdown("**Mapa esquerre**")
+        cultiu_esq = selector_cultiu("esq", tots_cultius)
+        campanya_esq = slider_campanya("esq", totes_campanyes)
+        variable_esq = panell_variable(
+            "esq", tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"
         )
-    with col4:
-        campanya_dre = st.selectbox("Campanya (dre.)", options=totes_campanyes, key="campanya_dre")
-    with col5:
-        cultiu_dre = st.selectbox("Cultiu (dre.)", options=tots_cultius, key="cultiu_dre")
-    with col6:
-        variable_dre = st.selectbox(
-            "Variable (dre.)",
-            options=variables_disponibles,
-            index=variables_disponibles.index(default_dre),
-            key="variable_dre",
+
+    with col_b:
+        st.markdown("**Mapa dret**")
+        cultiu_dre = selector_cultiu("dre", tots_cultius)
+        campanya_dre = slider_campanya("dre", totes_campanyes)
+        variable_dre = panell_variable(
+            "dre", tipus_default="Rendiment", reg_sec_default="S", empresa_default="IRTA"
         )
 
     df_map_esq = construeix_df_map(campanya_esq, cultiu_esq, totes_comarques)
