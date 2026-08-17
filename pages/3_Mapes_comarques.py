@@ -150,33 +150,35 @@ def nom_variable(tipus_codi, empresa, reg_sec):
 
 
 def panell_variable(key_prefix, tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"):
-    """Panell plegable: Tipus (Superfície/Producció/Rendiment) + Reg./Secà + Font.
-    Retorna el nom real de la columna resultant, p.ex. 'PROD_IRTA(t/ha)_R'."""
+    """Panell plegable: Tipus (Superfície/Producció/Rendiment) + Reg./Secà + Font,
+    tot en una sola línia. Retorna el nom real de la columna resultant,
+    p.ex. 'PROD_IRTA(t/ha)_R'."""
     with st.expander("🔧 Variable", expanded=True):
-        tipus_label = st.segmented_control(
-            "Tipus de variable",
-            options=list(TIPUS_CODIS.keys()),
-            default=tipus_default,
-            key=f"tipus_{key_prefix}",
-        )
-        if tipus_label is None:
-            tipus_label = tipus_default
-
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
+            tipus_label = st.segmented_control(
+                "Tipus de variable",
+                options=list(TIPUS_CODIS.keys()),
+                default=tipus_default,
+                key=f"tipus_{key_prefix}",
+            )
+        with c2:
             reg_sec = st.segmented_control(
                 "Regadiu / Secà",
                 options=["R", "S"],
                 default=reg_sec_default,
                 key=f"regsec_{key_prefix}",
             )
-        with c2:
+        with c3:
             empresa = st.segmented_control(
                 "Font",
                 options=["IRTA", "DARPA"],
                 default=empresa_default,
                 key=f"empresa_{key_prefix}",
             )
+
+        if tipus_label is None:
+            tipus_label = tipus_default
         if reg_sec is None:
             reg_sec = reg_sec_default
         if empresa is None:
@@ -296,16 +298,22 @@ else:
 
     with col_a:
         st.markdown("**Mapa esquerre**")
-        cultiu_esq = selector_cultiu("esq", tots_cultius)
-        campanya_esq = slider_campanya("esq", totes_campanyes)
+        sub1, sub2 = st.columns(2)
+        with sub1:
+            cultiu_esq = selector_cultiu("esq", tots_cultius)
+        with sub2:
+            campanya_esq = slider_campanya("esq", totes_campanyes)
         variable_esq = panell_variable(
             "esq", tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"
         )
 
     with col_b:
         st.markdown("**Mapa dret**")
-        cultiu_dre = selector_cultiu("dre", tots_cultius)
-        campanya_dre = slider_campanya("dre", totes_campanyes)
+        sub3, sub4 = st.columns(2)
+        with sub3:
+            cultiu_dre = selector_cultiu("dre", tots_cultius)
+        with sub4:
+            campanya_dre = slider_campanya("dre", totes_campanyes)
         variable_dre = panell_variable(
             "dre", tipus_default="Rendiment", reg_sec_default="S", empresa_default="IRTA"
         )
