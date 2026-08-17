@@ -40,9 +40,37 @@ def geometria_a_geojson(_gdf):
     return json.loads(_gdf.to_json())
 
 
+# Grups de variables que comparteixen unitat -> comparteixen rang de color
+GRUPS_VARIABLES = {
+    "HA_R": ["HA_IRTA_R", "HA_DARPA_R"],
+    "HA_S": ["HA_IRTA_S", "HA_DARPA_S"],
+    "PROD(t)_R": ["PROD_IRTA(t)_R", "PROD_DARPA(t)_R"],
+    "PROD(t)_S": ["PROD_IRTA(t)_S", "PROD_DARPA(t)_S"],
+    "PROD(t/ha)_R": ["PROD_IRTA(t/ha)_R", "PROD_DARPA(t/ha)_R"],
+    "PROD(t/ha)_S": ["PROD_IRTA(t/ha)_S", "PROD_DARPA(t/ha)_S"],
+}
+VARIABLE_A_GRUP = {v: grup for grup, cols in GRUPS_VARIABLES.items() for v in cols}
+
+
+@st.cache_data
+def calcula_rangs_fixos(df):
+    """Min/max per CULTIU + grup de variable, agafant TOTES les campanyes.
+    Així el rang de color no canvia en canviar d'any i es poden comparar."""
+    rangs = {}
+    for cultiu, df_c in df.groupby("CULTIU"):
+        for grup, cols in GRUPS_VARIABLES.items():
+            cols_presents = [c for c in cols if c in df_c.columns]
+            valors = df_c[cols_presents].to_numpy().flatten()
+            valors = valors[~pd.isna(valors)]
+            if len(valors) > 0:
+                rangs[(cultiu, grup)] = (float(valors.min()), float(valors.max()))
+    return rangs
+
+
 df2 = load_data()
 gdf_c = load_geometria()
 geojson = geometria_a_geojson(gdf_c)
+rangs_fixos = calcula_rangs_fixos(df2)
 
 # Centre del mapa calculat automàticament a partir de la geometria
 minx, miny, maxx, maxy = gdf_c.total_bounds
@@ -99,11 +127,16 @@ fig = go.Figure()
 
 # --- Capa 1: comarques amb dada (color segons variable_sel) ---
 if not df_amb_dada.empty:
+    grup_sel = VARIABLE_A_GRUP.get(variable_sel)
+    zmin, zmax = rangs_fixos.get((cultiu_sel, grup_sel), (None, None))
+
     fig.add_trace(
         go.Choroplethmapbox(
             geojson=geojson,
             locations=df_amb_dada["COMARCA"],
             z=df_amb_dada[variable_sel],
+            zmin=zmin,
+            zmax=zmax,
             featureidkey="properties.COMARCA",
             customdata=df_amb_dada[variables_disponibles],
             colorscale="YlOrRd",
