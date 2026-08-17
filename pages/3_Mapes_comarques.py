@@ -197,7 +197,7 @@ def slider_campanya(key_prefix, totes_campanyes):
 
 
 def selector_cultiu(key_prefix, tots_cultius):
-    default = tots_cultius[0]
+    default = "BLAT" if "BLAT" in tots_cultius else tots_cultius[0]
     valor = st.segmented_control(
         "Cultiu", options=tots_cultius, default=default, key=f"cultiu_{key_prefix}"
     )
