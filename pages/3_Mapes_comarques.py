@@ -132,7 +132,7 @@ if not df_sense_dada.empty:
 
 fig.update_layout(
     mapbox_style="carto-positron",  # base senzilla i lleugera, sense token
-    mapbox_zoom=6.3,
+    mapbox_zoom=7.1,
     mapbox_center=centre,
     margin=dict(l=0, r=0, t=20, b=0),
     height=650,
