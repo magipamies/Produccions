@@ -109,16 +109,22 @@ def nom_variable(tipus_codi, empresa, reg_sec):
 COLOR_R = "#5B84B1"
 COLOR_S = "#B1615B"
 
+AMPLE_ETIQUETA = 4  # ample (en caràcters monoespai) de la columna R/S
+AMPLE_VALOR = 9  # ample de cada columna de valor (IRTA / DARPA)
+
 
 def build_hover_extra(variables_disponibles):
-    """Cos del popup (sense la capçalera de comarca ni <extra></extra>), agrupat
-    per Superfície/Producció/Rendiment, amb el regadiu (R) en blau subtil i el
-    secà (S) en vermell subtil."""
+    """Cos del popup (sense la capçalera de comarca ni <extra></extra>): una
+    petita 'taula' per Superfície/Producció/Rendiment (unitat al títol, no
+    repetida a cada valor), amb columnes IRTA/DARPA alineades i el regadiu (R)
+    en blau subtil / secà (S) en vermell subtil."""
     idx = {v: i for i, v in enumerate(variables_disponibles)}
 
-    def valor(tipus_codi, empresa, reg_sec):
+    def cel(tipus_codi, empresa, reg_sec):
         i = idx.get(nom_variable(tipus_codi, empresa, reg_sec))
-        return f"%{{customdata[{i}]:.2f}}" if i is not None else "–"
+        if i is None:
+            return f'{"–":>{AMPLE_VALOR}}'
+        return f"%{{customdata[{i}]:>{AMPLE_VALOR}.2f}}"
 
     blocs = []
     for tipus_codi, etiqueta, unitat in [
@@ -126,17 +132,27 @@ def build_hover_extra(variables_disponibles):
         ("t", "Producció", "t"),
         ("t/ha", "Rendiment", "t/ha"),
     ]:
-        linia_r = (
-            f'<span style="color:{COLOR_R}">R</span>  IRTA {valor(tipus_codi, "IRTA", "R")} {unitat}'
-            f'  ·  DARPA {valor(tipus_codi, "DARPA", "R")} {unitat}'
+        titol = f"<b>{etiqueta} ({unitat})</b><br>"
+        capcalera = f'{"":>{AMPLE_ETIQUETA}}{"IRTA":>{AMPLE_VALOR}}{"DARPA":>{AMPLE_VALOR}}'
+        fila_r = (
+            f'<span style="color:{COLOR_R}">{"R":>{AMPLE_ETIQUETA}}</span>'
+            f'{cel(tipus_codi, "IRTA", "R")}{cel(tipus_codi, "DARPA", "R")}'
         )
-        linia_s = (
-            f'<span style="color:{COLOR_S}">S</span>  IRTA {valor(tipus_codi, "IRTA", "S")} {unitat}'
-            f'  ·  DARPA {valor(tipus_codi, "DARPA", "S")} {unitat}'
+        fila_s = (
+            f'<span style="color:{COLOR_S}">{"S":>{AMPLE_ETIQUETA}}</span>'
+            f'{cel(tipus_codi, "IRTA", "S")}{cel(tipus_codi, "DARPA", "S")}'
         )
-        blocs.append(f"<b>{etiqueta}</b><br>{linia_r}<br>{linia_s}")
+        # Monoespai només a la part tabular, perquè les columnes quedin alineades
+        taula = (
+            '<span style="font-family:\'Courier New\',monospace">'
+            + capcalera + "<br>" + fila_r + "<br>" + fila_s
+            + "</span>"
+        )
+        blocs.append(titol + taula)
 
     return "<br><br>".join(blocs)
+
+
 
 
 def build_hovertemplate(variables_disponibles):
