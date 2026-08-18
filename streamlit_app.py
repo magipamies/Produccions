@@ -152,12 +152,12 @@ else:
                 line_dash="RegSec",
                 line_dash_map={"R": "solid", "S": "dash"},
                 symbol="Font",
-                symbol_map={"IRTA": "circle", "DARPA": "square"},
+                symbol_map={"IRTA": "circle", "DARPA": "diamond"},
                 line_shape="spline",
                 markers=True,
                 title=cultiu,
             )
-            fig.update_traces(line=dict(smoothing=1.0))
+            fig.update_traces(line=dict(smoothing=1.0), marker=dict(size=9, line=dict(width=1, color="white")))
 
             # Popup personalitzat: comarca en negreta amb el color de la línia,
             # i a sota "R-IRTA: Valor"
