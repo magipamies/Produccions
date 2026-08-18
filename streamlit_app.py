@@ -34,8 +34,7 @@ def panell_variable():
     """Tipus de variable (un de sol, defineix la unitat de l'eix Y) +
     Regadiu/Secà + Font (IRTA/DARPA), aquests dos últims es poden triar a la
     vegada, sense amagar-ho dins de cap panell plegable.
-    Retorna (llista_de_columnes, map_regsec {columna: 'R'}, map_font
-    {columna: 'IRTA'}, títol eix Y)."""
+    Retorna (llista_de_columnes, map_estil {columna: 'R-IRTA'}, títol eix Y)."""
     c1, c2, c3 = st.columns(3)
     with c1:
         tipus_label = st.segmented_control(
@@ -71,8 +70,7 @@ def panell_variable():
     tipus_codi = TIPUS_CODIS[tipus_label]
 
     cols_resultants = []
-    map_regsec = {}
-    map_font = {}
+    map_estil = {}
     for rs in ["R", "S"]:
         if rs not in reg_sec_sel:
             continue
@@ -81,12 +79,21 @@ def panell_variable():
                 continue
             col = nom_variable(tipus_codi, emp, rs)
             cols_resultants.append(col)
-            map_regsec[col] = rs
-            map_font[col] = emp
+            map_estil[col] = f"{rs}-{emp}"
 
     eix_y_titol = f"{tipus_label} ({tipus_codi})"
 
-    return cols_resultants, map_regsec, map_font, eix_y_titol
+    return cols_resultants, map_estil, eix_y_titol
+
+
+# Un tipus de línia diferent per cada combinació Regadiu/Secà × Font, per
+# poder distingir-les sense dependre només de la forma del marcador
+ESTIL_DASH = {
+    "R-IRTA": "solid",
+    "R-DARPA": "dashdot",
+    "S-IRTA": "dash",
+    "S-DARPA": "dot",
+}
 
 
 # --- Selectors ---
@@ -98,7 +105,7 @@ comarques = st.multiselect(
     default=default_comarca,
 )
 
-variables, map_regsec, map_font, eix_y_titol = panell_variable()
+variables, map_estil, eix_y_titol = panell_variable()
 
 # --- Validacions ---
 if not comarques:
@@ -130,18 +137,16 @@ else:
             # El convertim a NaN perquè Plotly deixi un buit en lloc de baixar a 0.
             df_long["Valor"] = df_long["Valor"].replace(0, pd.NA)
 
-            # Separem Regadiu/Secà i Font com a dues dimensions independents,
-            # perquè cadascuna controli un atribut visual FIX (no depenent de
-            # què hagis seleccionat): R=línia contínua, S=discontínua;
-            # IRTA=cercle, DARPA=quadrat. El color queda lliure per comarca.
-            df_long["RegSec"] = df_long["ColumnaOrigen"].map(map_regsec)
-            df_long["Font"] = df_long["ColumnaOrigen"].map(map_font)
+            # "R-IRTA", "S-DARPA", etc. — cada combinació té un tipus de línia
+            # FIX (veure ESTIL_DASH), independent de què hagis seleccionat.
+            # El color queda lliure per comarca.
+            df_long["Estil"] = df_long["ColumnaOrigen"].map(map_estil)
 
-            # Si per la mateixa CAMPANYA+COMARCA+RegSec+Font hi ha diverses files,
+            # Si per la mateixa CAMPANYA+COMARCA+Estil hi ha diverses files,
             # sumem. min_count=1 fa que si TOTS els valors del grup són NaN, el
             # resultat sigui NaN (i per tant no es dibuixi res) en lloc de 0.
             df_long = df_long.groupby(
-                ["CAMPANYA", "COMARCA", "RegSec", "Font"], as_index=False
+                ["CAMPANYA", "COMARCA", "Estil"], as_index=False
             )["Valor"].sum(min_count=1)
 
             fig = px.line(
@@ -149,22 +154,20 @@ else:
                 x="CAMPANYA",
                 y="Valor",
                 color="COMARCA",
-                line_dash="RegSec",
-                line_dash_map={"R": "solid", "S": "dash"},
-                symbol="Font",
-                symbol_map={"IRTA": "circle", "DARPA": "diamond"},
+                line_dash="Estil",
+                line_dash_map=ESTIL_DASH,
                 line_shape="spline",
                 markers=True,
                 title=cultiu,
             )
-            fig.update_traces(line=dict(smoothing=1.0), marker=dict(size=9, line=dict(width=1, color="white")))
+            fig.update_traces(line=dict(smoothing=1.0), marker=dict(size=7, line=dict(width=1, color="white")))
 
             # Popup personalitzat: comarca en negreta amb el color de la línia,
             # i a sota "R-IRTA: Valor"
             for trace in fig.data:
                 parts = trace.name.split(", ")
                 comarca_nom = parts[0]
-                variable_nom = "-".join(parts[1:]) if len(parts) > 1 else ""
+                variable_nom = parts[1] if len(parts) > 1 else ""
                 color = trace.line.color
                 trace.hovertemplate = (
                     f'<b><span style="color:{color}">{comarca_nom}</span></b><br>'
