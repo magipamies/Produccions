@@ -34,7 +34,8 @@ def panell_variable():
     """Tipus de variable (un de sol, defineix la unitat de l'eix Y) +
     Regadiu/Secà + Font (IRTA/DARPA), aquests dos últims es poden triar a la
     vegada, sense amagar-ho dins de cap panell plegable.
-    Retorna (llista_de_columnes, etiquetes {columna: 'R-IRTA'}, títol eix Y)."""
+    Retorna (llista_de_columnes, map_regsec {columna: 'R'}, map_font
+    {columna: 'IRTA'}, títol eix Y)."""
     c1, c2, c3 = st.columns(3)
     with c1:
         tipus_label = st.segmented_control(
@@ -70,7 +71,8 @@ def panell_variable():
     tipus_codi = TIPUS_CODIS[tipus_label]
 
     cols_resultants = []
-    etiquetes = {}
+    map_regsec = {}
+    map_font = {}
     for rs in ["R", "S"]:
         if rs not in reg_sec_sel:
             continue
@@ -79,11 +81,12 @@ def panell_variable():
                 continue
             col = nom_variable(tipus_codi, emp, rs)
             cols_resultants.append(col)
-            etiquetes[col] = f"{rs}-{emp}"
+            map_regsec[col] = rs
+            map_font[col] = emp
 
     eix_y_titol = f"{tipus_label} ({tipus_codi})"
 
-    return cols_resultants, etiquetes, eix_y_titol
+    return cols_resultants, map_regsec, map_font, eix_y_titol
 
 
 # --- Selectors ---
@@ -95,7 +98,7 @@ comarques = st.multiselect(
     default=default_comarca,
 )
 
-variables, etiquetes_variable, eix_y_titol = panell_variable()
+variables, map_regsec, map_font, eix_y_titol = panell_variable()
 
 # --- Validacions ---
 if not comarques:
@@ -119,7 +122,7 @@ else:
             df_long = df_cultiu.melt(
                 id_vars=["CAMPANYA", "COMARCA"],
                 value_vars=variables,
-                var_name="Variable",
+                var_name="ColumnaOrigen",
                 value_name="Valor",
             )
 
@@ -127,15 +130,18 @@ else:
             # El convertim a NaN perquè Plotly deixi un buit en lloc de baixar a 0.
             df_long["Valor"] = df_long["Valor"].replace(0, pd.NA)
 
-            # A la llegenda/popup volem "R-IRTA", "S-DARPA", etc. en lloc del
-            # nom sencer de la columna (la unitat ja queda clara amb l'eix Y)
-            df_long["Variable"] = df_long["Variable"].map(etiquetes_variable)
+            # Separem Regadiu/Secà i Font com a dues dimensions independents,
+            # perquè cadascuna controli un atribut visual FIX (no depenent de
+            # què hagis seleccionat): R=línia contínua, S=discontínua;
+            # IRTA=cercle, DARPA=quadrat. El color queda lliure per comarca.
+            df_long["RegSec"] = df_long["ColumnaOrigen"].map(map_regsec)
+            df_long["Font"] = df_long["ColumnaOrigen"].map(map_font)
 
-            # Si per la mateixa CAMPANYA+COMARCA+Variable hi ha diverses files, sumem.
-            # min_count=1 fa que si TOTS els valors del grup són NaN, el resultat
-            # sigui NaN (i per tant no es dibuixi res) en lloc de 0.
+            # Si per la mateixa CAMPANYA+COMARCA+RegSec+Font hi ha diverses files,
+            # sumem. min_count=1 fa que si TOTS els valors del grup són NaN, el
+            # resultat sigui NaN (i per tant no es dibuixi res) en lloc de 0.
             df_long = df_long.groupby(
-                ["CAMPANYA", "COMARCA", "Variable"], as_index=False
+                ["CAMPANYA", "COMARCA", "RegSec", "Font"], as_index=False
             )["Valor"].sum(min_count=1)
 
             fig = px.line(
@@ -143,7 +149,10 @@ else:
                 x="CAMPANYA",
                 y="Valor",
                 color="COMARCA",
-                line_dash="Variable",
+                line_dash="RegSec",
+                line_dash_map={"R": "solid", "S": "dash"},
+                symbol="Font",
+                symbol_map={"IRTA": "circle", "DARPA": "square"},
                 line_shape="spline",
                 markers=True,
                 title=cultiu,
@@ -155,7 +164,7 @@ else:
             for trace in fig.data:
                 parts = trace.name.split(", ")
                 comarca_nom = parts[0]
-                variable_nom = parts[1] if len(parts) > 1 else ""
+                variable_nom = "-".join(parts[1:]) if len(parts) > 1 else ""
                 color = trace.line.color
                 trace.hovertemplate = (
                     f'<b><span style="color:{color}">{comarca_nom}</span></b><br>'

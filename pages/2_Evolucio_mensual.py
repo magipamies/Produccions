@@ -122,6 +122,7 @@ else:
                 y="Valor",
                 color="COMARCA",
                 line_dash="Variable",
+                line_dash_map={"R": "solid", "S": "dash"},
                 line_shape="spline",
                 markers=True,
                 title=cultiu,
