@@ -163,12 +163,15 @@ else:
             fig.update_traces(line=dict(smoothing=1.0), marker=dict(size=7, line=dict(width=1, color="white")))
 
             # Popup personalitzat: comarca en negreta amb el color de la línia,
-            # i a sota "R-IRTA: Valor"
+            # i a sota "R-IRTA: Valor". També fixem trace.name explícitament
+            # perquè la LLEGENDA del gràfic (no només el popup) mostri el
+            # mateix "Comarca · R-IRTA" en comptes del format per defecte.
             for trace in fig.data:
                 parts = trace.name.split(", ")
                 comarca_nom = parts[0]
                 variable_nom = parts[1] if len(parts) > 1 else ""
                 color = trace.line.color
+                trace.name = f"{comarca_nom} · {variable_nom}" if variable_nom else comarca_nom
                 trace.hovertemplate = (
                     f'<b><span style="color:{color}">{comarca_nom}</span></b><br>'
                     f"{variable_nom}: %{{y:.2f}}<extra></extra>"

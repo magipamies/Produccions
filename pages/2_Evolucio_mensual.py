@@ -136,6 +136,7 @@ else:
                 comarca_nom = parts[0]
                 variable_nom = parts[1] if len(parts) > 1 else ""
                 color = trace.line.color
+                trace.name = f"{comarca_nom} · {variable_nom}" if variable_nom else comarca_nom
                 trace.hovertemplate = (
                     f'<b><span style="color:{color}">{comarca_nom}</span></b><br>'
                     f"{variable_nom}: %{{y:.2f}}<extra></extra>"
