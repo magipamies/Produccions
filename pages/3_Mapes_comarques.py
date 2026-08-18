@@ -92,16 +92,74 @@ minx, miny, maxx, maxy = gdf_c.total_bounds
 centre = {"lat": (miny + maxy) / 2, "lon": (minx + maxx) / 2}
 
 
+# --- Construcció del nom de variable a partir de 3 tries ---
+TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
+
+
+def nom_variable(tipus_codi, empresa, reg_sec):
+    if tipus_codi == "ha":
+        return f"HA_{empresa}_{reg_sec}"
+    elif tipus_codi == "t":
+        return f"PROD_{empresa}(t)_{reg_sec}"
+    else:  # "t/ha"
+        return f"PROD_{empresa}(t/ha)_{reg_sec}"
+
+
+# Colors molt subtils per distingir regadiu (blau) de secà (vermell) al popup
+COLOR_R = "#5B84B1"
+COLOR_S = "#B1615B"
+
+
+def build_hover_extra(variables_disponibles):
+    """Cos del popup (sense la capçalera de comarca ni <extra></extra>), agrupat
+    per Superfície/Producció/Rendiment, amb el regadiu (R) en blau subtil i el
+    secà (S) en vermell subtil."""
+    idx = {v: i for i, v in enumerate(variables_disponibles)}
+
+    def valor(tipus_codi, empresa, reg_sec):
+        i = idx.get(nom_variable(tipus_codi, empresa, reg_sec))
+        return f"%{{customdata[{i}]:.2f}}" if i is not None else "–"
+
+    blocs = []
+    for tipus_codi, etiqueta, unitat in [
+        ("ha", "Superfície", "ha"),
+        ("t", "Producció", "t"),
+        ("t/ha", "Rendiment", "t/ha"),
+    ]:
+        linia_r = (
+            f'<span style="color:{COLOR_R}">R</span>  IRTA {valor(tipus_codi, "IRTA", "R")} {unitat}'
+            f'  ·  DARPA {valor(tipus_codi, "DARPA", "R")} {unitat}'
+        )
+        linia_s = (
+            f'<span style="color:{COLOR_S}">S</span>  IRTA {valor(tipus_codi, "IRTA", "S")} {unitat}'
+            f'  ·  DARPA {valor(tipus_codi, "DARPA", "S")} {unitat}'
+        )
+        blocs.append(f"<b>{etiqueta}</b><br>{linia_r}<br>{linia_s}")
+
+    return "<br><br>".join(blocs)
+
+
+def build_hovertemplate(variables_disponibles):
+    return (
+        '<b><span style="font-size:13px">%{location}</span></b><br><br>'
+        + build_hover_extra(variables_disponibles)
+        + "<extra></extra>"
+    )
+
+
+HOVERLABEL = {
+    "bgcolor": "white",
+    "bordercolor": "#dddddd",
+    "font": {"size": 12, "family": "Arial, sans-serif"},
+}
+
+
 def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, rangs_fixos):
     """Retorna (com a text JS) les 2 traces choroplethmapbox (amb dada + blanc)
     per a una variable concreta. 'geojson' es referencia com a variable JS
     compartida (no es duplica dins de cada trace)."""
     df_amb = df_map[df_map[variable].notna()]
     df_sense = df_map[df_map[variable].isna()]
-
-    linies_hover = "<br>".join(
-        f"{var}: %{{customdata[{i}]:.2f}}" for i, var in enumerate(variables_disponibles)
-    )
 
     grup = VARIABLE_A_GRUP.get(variable)
     zmin, zmax = rangs_fixos.get((cultiu_sel, grup), (None, None))
@@ -117,7 +175,8 @@ def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, 
         "colorscale": "YlOrRd",
         "marker": {"line": {"color": "white", "width": 0.8}},
         "colorbar": {"title": {"text": VARIABLE_A_UNITAT.get(variable, variable)}},
-        "hovertemplate": "<b>%{location}</b><br>" + linies_hover + "<extra></extra>",
+        "hovertemplate": build_hovertemplate(variables_disponibles),
+        "hoverlabel": HOVERLABEL,
     }
     trace_sense = {
         "type": "choroplethmapbox",
@@ -127,26 +186,14 @@ def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, 
         "colorscale": [[0, "white"], [1, "white"]],
         "showscale": False,
         "marker": {"line": {"color": "lightgrey", "width": 0.8}},
-        "hovertemplate": "<b>%{location}</b><br>Sense dades<extra></extra>",
+        "hovertemplate": '<b><span style="font-size:13px">%{location}</span></b><br><i>Sense dades</i><extra></extra>',
+        "hoverlabel": HOVERLABEL,
     }
 
     # geojson s'insereix com a referència a la variable JS "geojson", no com a JSON literal
     js_amb = json.dumps(trace_amb)[:-1] + ', "geojson": geojson}'
     js_sense = json.dumps(trace_sense)[:-1] + ', "geojson": geojson}'
     return f"[{js_amb}, {js_sense}]"
-
-
-# --- Construcció del nom de variable a partir de 3 tries ---
-TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
-
-
-def nom_variable(tipus_codi, empresa, reg_sec):
-    if tipus_codi == "ha":
-        return f"HA_{empresa}_{reg_sec}"
-    elif tipus_codi == "t":
-        return f"PROD_{empresa}(t)_{reg_sec}"
-    else:  # "t/ha"
-        return f"PROD_{empresa}(t/ha)_{reg_sec}"
 
 
 def panell_variable(key_prefix, tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"):
@@ -237,10 +284,6 @@ if not comparar:
     df_amb_dada = df_map[df_map[variable_sel].notna()]
     df_sense_dada = df_map[df_map[variable_sel].isna()]
 
-    linies_hover = "<br>".join(
-        f"{var}: %{{customdata[{i}]:.2f}}" for i, var in enumerate(variables_disponibles)
-    )
-
     fig = go.Figure()
 
     if not df_amb_dada.empty:
@@ -259,7 +302,8 @@ if not comparar:
                 marker_line_color="white",
                 marker_line_width=0.8,
                 colorbar_title=VARIABLE_A_UNITAT.get(variable_sel, variable_sel),
-                hovertemplate="<b>%{location}</b><br>" + linies_hover + "<extra></extra>",
+                hovertemplate=build_hovertemplate(variables_disponibles),
+                hoverlabel=HOVERLABEL,
             )
         )
 
@@ -274,7 +318,8 @@ if not comparar:
                 showscale=False,
                 marker_line_color="lightgrey",
                 marker_line_width=0.8,
-                hovertemplate="<b>%{location}</b><br>Sense dades<extra></extra>",
+                hovertemplate='<b><span style="font-size:13px">%{location}</span></b><br><i>Sense dades</i><extra></extra>',
+                hoverlabel=HOVERLABEL,
             )
         )
 
@@ -332,6 +377,7 @@ else:
         "mapbox": {"style": "carto-positron", "zoom": 7.1, "center": centre},
         "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
         "height": 650,
+        "hoverlabel": HOVERLABEL,
     }
     layout_esq = json.dumps(
         {**layout_comu, "title": {"text": f"{variable_esq} · {cultiu_esq} · {campanya_esq}"}}
