@@ -109,8 +109,16 @@ def nom_variable(tipus_codi, empresa, reg_sec):
 COLOR_R = "#5B84B1"
 COLOR_S = "#B1615B"
 
-AMPLE_ETIQUETA = 4  # ample (en caràcters monoespai) de la columna R/S
-AMPLE_VALOR = 9  # ample de cada columna de valor (IRTA / DARPA)
+# "Figure space" (U+2007): un espai amb la mateixa amplada que un dígit, pensat
+# per alinear taules de números. A diferència dels espais normals, Plotly no el
+# "menja" ni el substitueix per cap símbol estrany en renderitzar el popup.
+FIGURE_SPACE = "\u2007"
+AMPLE_ETIQUETA = 4  # ample (en caràcters) de la columna R/S
+AMPLE_VALOR = 10  # ample de cada columna de valor (prou per milers amb separador de miler)
+
+
+def _pad(text, width):
+    return f"{text:{FIGURE_SPACE}>{width}}"
 
 
 def build_hover_extra(variables_disponibles):
@@ -123,8 +131,8 @@ def build_hover_extra(variables_disponibles):
     def cel(tipus_codi, empresa, reg_sec):
         i = idx.get(nom_variable(tipus_codi, empresa, reg_sec))
         if i is None:
-            return f'{"–":>{AMPLE_VALOR}}'
-        return f"%{{customdata[{i}]:>{AMPLE_VALOR}.2f}}"
+            return _pad("–", AMPLE_VALOR)
+        return f"%{{customdata[{i}]:{FIGURE_SPACE}>{AMPLE_VALOR},.2f}}"
 
     blocs = []
     for tipus_codi, etiqueta, unitat in [
@@ -133,13 +141,13 @@ def build_hover_extra(variables_disponibles):
         ("t/ha", "Rendiment", "t/ha"),
     ]:
         titol = f"<b>{etiqueta} ({unitat})</b><br>"
-        capcalera = f'{"":>{AMPLE_ETIQUETA}}{"IRTA":>{AMPLE_VALOR}}{"DARPA":>{AMPLE_VALOR}}'
+        capcalera = _pad("", AMPLE_ETIQUETA) + _pad("IRTA", AMPLE_VALOR) + _pad("DARPA", AMPLE_VALOR)
         fila_r = (
-            f'<span style="color:{COLOR_R}">{"R":>{AMPLE_ETIQUETA}}</span>'
+            f'<span style="color:{COLOR_R}">{_pad("R", AMPLE_ETIQUETA)}</span>'
             f'{cel(tipus_codi, "IRTA", "R")}{cel(tipus_codi, "DARPA", "R")}'
         )
         fila_s = (
-            f'<span style="color:{COLOR_S}">{"S":>{AMPLE_ETIQUETA}}</span>'
+            f'<span style="color:{COLOR_S}">{_pad("S", AMPLE_ETIQUETA)}</span>'
             f'{cel(tipus_codi, "IRTA", "S")}{cel(tipus_codi, "DARPA", "S")}'
         )
         # Monoespai només a la part tabular, perquè les columnes quedin alineades
