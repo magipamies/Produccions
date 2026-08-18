@@ -150,7 +150,7 @@ def build_hovertemplate(variables_disponibles):
 HOVERLABEL = {
     "bgcolor": "white",
     "bordercolor": "#dddddd",
-    "font": {"size": 12, "family": "Arial, sans-serif"},
+    "font": {"size": 12, "family": "Arial, sans-serif", "color": "#222222"},
 }
 
 
