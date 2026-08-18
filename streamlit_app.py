@@ -90,7 +90,7 @@ def panell_variable():
 # poder distingir-les sense dependre només de la forma del marcador
 ESTIL_DASH = {
     "R-IRTA": "solid",
-    "R-DARPA": "dashdot",
+    "R-DARPA": "longdash",
     "S-IRTA": "dash",
     "S-DARPA": "dot",
 }
@@ -181,6 +181,7 @@ else:
                 xaxis_title="Campanya",
                 yaxis_title=eix_y_titol,
                 legend_title=None,
+                legend=dict(itemwidth=50),  # miniatura més ampla, perquè es vegi bé el tipus de línia
                 hovermode="x unified",
                 height=400,
             )
