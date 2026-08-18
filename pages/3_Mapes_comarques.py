@@ -111,11 +111,11 @@ COLOR_S = "#B1615B"
 
 
 def build_hover_extra(variables_disponibles):
-    """Cos del popup (sense la capçalera de comarca ni <extra></extra>): un bloc
-    per Superfície/Producció (sense decimals) i Rendiment (amb 2 decimals).
-    'IRTA · DARPA' surt un sol cop com a capçalera del bloc (no a cada fila),
-    i les files R/S només tenen els valors, en aquest mateix ordre. El regadiu
-    (R) va en blau subtil i el secà (S) en vermell subtil."""
+    """Cos del popup (sense la capçalera de comarca ni <extra></extra>): 'IRTA ·
+    DARPA' surt un sol cop a dalt de tot (a sobre de Superfície), i cada bloc
+    (Superfície/Producció sense decimals, Rendiment amb 2) només té les files
+    R/S amb els valors, en aquest mateix ordre. El regadiu (R) va en blau
+    subtil i el secà (S) en vermell subtil."""
     idx = {v: i for i, v in enumerate(variables_disponibles)}
 
     def valor(tipus_codi, empresa, reg_sec, format_spec):
@@ -128,7 +128,6 @@ def build_hover_extra(variables_disponibles):
         ("t", "Producció", "t", ",.0f"),
         ("t/ha", "Rendiment", "t/ha", ",.2f"),
     ]:
-        capcalera = '<span style="color:#999999; font-size:11px">IRTA · DARPA</span>'
         linia_r = (
             f'<span style="color:{COLOR_R}">R</span> '
             f'{valor(tipus_codi, "IRTA", "R", format_spec)} · {valor(tipus_codi, "DARPA", "R", format_spec)}'
@@ -137,9 +136,10 @@ def build_hover_extra(variables_disponibles):
             f'<span style="color:{COLOR_S}">S</span> '
             f'{valor(tipus_codi, "IRTA", "S", format_spec)} · {valor(tipus_codi, "DARPA", "S", format_spec)}'
         )
-        blocs.append(f"<b>{etiqueta} ({unitat})</b><br>{capcalera}<br>{linia_r}<br>{linia_s}")
+        blocs.append(f"<b>{etiqueta} ({unitat})</b><br>{linia_r}<br>{linia_s}")
 
-    return "<br><br>".join(blocs)
+    capcalera = '<span style="color:#999999; font-size:11px">IRTA · DARPA</span>'
+    return capcalera + "<br>" + "<br><br>".join(blocs)
 
 
 def build_hovertemplate(variables_disponibles):
