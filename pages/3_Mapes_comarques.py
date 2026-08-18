@@ -112,8 +112,10 @@ COLOR_S = "#B1615B"
 
 def build_hover_extra(variables_disponibles):
     """Cos del popup (sense la capçalera de comarca ni <extra></extra>): un bloc
-    per Superfície/Producció (sense decimals) i Rendiment (amb 2 decimals),
-    amb el regadiu (R) en blau subtil i el secà (S) en vermell subtil."""
+    per Superfície/Producció (sense decimals) i Rendiment (amb 2 decimals).
+    'IRTA · DARPA' surt un sol cop com a capçalera del bloc (no a cada fila),
+    i les files R/S només tenen els valors, en aquest mateix ordre. El regadiu
+    (R) va en blau subtil i el secà (S) en vermell subtil."""
     idx = {v: i for i, v in enumerate(variables_disponibles)}
 
     def valor(tipus_codi, empresa, reg_sec, format_spec):
@@ -126,15 +128,16 @@ def build_hover_extra(variables_disponibles):
         ("t", "Producció", "t", ",.0f"),
         ("t/ha", "Rendiment", "t/ha", ",.2f"),
     ]:
+        capcalera = '<span style="color:#999999; font-size:11px">IRTA · DARPA</span>'
         linia_r = (
-            f'<span style="color:{COLOR_R}">R</span> IRTA {valor(tipus_codi, "IRTA", "R", format_spec)}'
-            f' · DARPA {valor(tipus_codi, "DARPA", "R", format_spec)}'
+            f'<span style="color:{COLOR_R}">R</span> '
+            f'{valor(tipus_codi, "IRTA", "R", format_spec)} · {valor(tipus_codi, "DARPA", "R", format_spec)}'
         )
         linia_s = (
-            f'<span style="color:{COLOR_S}">S</span> IRTA {valor(tipus_codi, "IRTA", "S", format_spec)}'
-            f' · DARPA {valor(tipus_codi, "DARPA", "S", format_spec)}'
+            f'<span style="color:{COLOR_S}">S</span> '
+            f'{valor(tipus_codi, "IRTA", "S", format_spec)} · {valor(tipus_codi, "DARPA", "S", format_spec)}'
         )
-        blocs.append(f"<b>{etiqueta} ({unitat})</b><br>{linia_r}<br>{linia_s}")
+        blocs.append(f"<b>{etiqueta} ({unitat})</b><br>{capcalera}<br>{linia_r}<br>{linia_s}")
 
     return "<br><br>".join(blocs)
 
@@ -329,6 +332,7 @@ if not comparar:
         mapbox_center=centre,
         margin=dict(l=0, r=0, t=20, b=0),
         height=650,
+        separators=",.",  # decimal amb coma, milers amb punt
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -378,6 +382,7 @@ else:
         "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
         "height": 650,
         "hoverlabel": HOVERLABEL,
+        "separators": ",.",  # decimal amb coma, milers amb punt
     }
     layout_esq = json.dumps(
         {**layout_comu, "title": {"text": f"{variable_esq} · {cultiu_esq} · {campanya_esq}"}}
