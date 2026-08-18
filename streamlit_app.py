@@ -1,8 +1,34 @@
+import random
+import colorsys
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="Evolució per comarca", layout="wide")
+
+
+def colors_aleatoris(n):
+    """Genera n colors amb to (hue) aleatori, saturació i lluminositat fixes
+    dins d'un rang que garanteix bon contrast sobre fons blanc."""
+    colors = []
+    for _ in range(n):
+        h = random.random()
+        s = random.uniform(0.55, 0.85)
+        l = random.uniform(0.35, 0.55)
+        r, g, b = colorsys.hls_to_rgb(h, l, s)
+        colors.append(f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}")
+    return colors
+
+
+def colors_per_comarca(comarques):
+    """Colors aleatoris per comarca, cachejats a session_state perquè no
+    canviïn cada vegada que es refà l'script (només quan canvia la selecció
+    de comarques)."""
+    clau = "colors_comarca_" + "|".join(sorted(comarques))
+    if clau not in st.session_state:
+        st.session_state[clau] = dict(zip(comarques, colors_aleatoris(len(comarques))))
+    return st.session_state[clau]
 
 
 @st.cache_data
@@ -120,6 +146,8 @@ else:
     if not cultius:
         st.info("No hi ha dades de cultiu per aquesta selecció.")
     else:
+        comarca_colors = colors_per_comarca(comarques)
+
         n_cols = 2  # nombre de gràfics per fila al grid
         cols = st.columns(n_cols)
 
@@ -154,6 +182,7 @@ else:
                 x="CAMPANYA",
                 y="Valor",
                 color="COMARCA",
+                color_discrete_map=comarca_colors,
                 line_dash="Estil",
                 line_dash_map=ESTIL_DASH,
                 line_shape="spline",
