@@ -14,7 +14,7 @@ st.set_page_config(page_title="Mapa de densitat (prova)", layout="wide")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data_flourish_muni_histo26_rs.csv")
+    df = pd.read_csv("../data_flourish_muni_histo26_rs.csv")
     df["ID_MUN"] = df["ID_MUN"].astype("int64")
     return df
 
@@ -23,7 +23,7 @@ def load_data():
 def load_centroides():
     """Centroide (lat, lon) de cada municipi, calculat a partir del geojson
     (en lloc dels polígons sencers, que és el que fa servir la pàgina 4)."""
-    gdf = gpd.read_file("muni_cat.geojson")
+    gdf = gpd.read_file("../muni_cat.geojson")
     gdf["ID_MUN"] = gdf["ID_MUN"].astype("int64")
     if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(epsg=4326)
