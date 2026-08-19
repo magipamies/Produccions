@@ -335,7 +335,14 @@ if not comparar:
         separators=",.",
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "displayModeBar": True,
+            "modeBarButtonsToAdd": ["zoomInMapbox", "zoomOutMapbox", "resetViewMapbox"],
+        },
+    )
 
     if not df_sense_dada.empty:
         with st.expander(f"⚠️ {len(df_sense_dada)} municipi(s) sense dada per aquesta selecció"):
@@ -396,8 +403,13 @@ else:
     <script>
       const geojson = {json.dumps(geojson)};
 
-      Plotly.newPlot('mapa_muni_esq', {traces_esq}, {layout_esq}, {{displayModeBar: true, responsive: true}});
-      Plotly.newPlot('mapa_muni_dre', {traces_dre}, {layout_dre}, {{displayModeBar: true, responsive: true}});
+      const config = {{
+        displayModeBar: true,
+        responsive: true,
+        modeBarButtonsToAdd: ['zoomInMapbox', 'zoomOutMapbox', 'resetViewMapbox'],
+      }};
+      Plotly.newPlot('mapa_muni_esq', {traces_esq}, {layout_esq}, config);
+      Plotly.newPlot('mapa_muni_dre', {traces_dre}, {layout_dre}, config);
     </script>
     """
     components.html(html, height=700, scrolling=False)
