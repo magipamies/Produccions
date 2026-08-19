@@ -287,19 +287,27 @@ def dibuixa_mapa(df_map, variable, cultiu_sel, titol=None):
             )
         )
 
+    # Contorn de comarca: traça (no "layer" de layout) afegida DESPRÉS de les
+    # anteriors, perquè quedi per sobre del polígons opacs dels municipis en
+    # lloc d'amagar-se per sota. Fill transparent, només es veu la vora.
+    fig.add_trace(
+        go.Choroplethmap(
+            geojson=geojson_comarques,
+            locations=gdf_com["COMARCA"],
+            z=[0] * len(gdf_com),
+            featureidkey="properties.COMARCA",
+            colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
+            showscale=False,
+            marker_line_color="#444444",
+            marker_line_width=1.3,
+            hoverinfo="skip",
+        )
+    )
+
     fig.update_layout(
         map_style="carto-positron",
         map_zoom=7.1,
         map_center=centre,
-        map_layers=[
-            dict(
-                sourcetype="geojson",
-                source=geojson_comarques,
-                type="line",
-                color="#444444",
-                line=dict(width=1.3),
-            )
-        ],
         margin=dict(l=0, r=0, t=30 if titol else 20, b=0),
         height=650,
         separators=",.",
