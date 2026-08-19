@@ -398,6 +398,7 @@ else:
       <div id="mapa_muni_esq" style="width:50%; height:680px;"></div>
       <div id="mapa_muni_dre" style="width:50%; height:680px;"></div>
     </div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4/dist/maplibre-gl.css" />
     <script src="https://cdn.plot.ly/plotly-3.6.0.min.js"></script>
     <script>
       const geojson = {json.dumps(geojson)};
