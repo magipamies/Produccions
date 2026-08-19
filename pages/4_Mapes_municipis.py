@@ -41,7 +41,7 @@ def load_geometria(tolerance=0.0008):
 def load_geometria_comarques(tolerance=0.001):
     """Només per dibuixar-hi el contorn a sobre del mapa de municipis (no
     per unir-hi dades) — per això no cal ID_MUN ni res més que la geometria."""
-    gdf = gpd.read_file("comarques.geojson")
+    gdf = gpd.read_file("comarques_cat.geojson")
     if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(epsg=4326)
     gdf["geometry"] = gdf["geometry"].simplify(tolerance, preserve_topology=True)
