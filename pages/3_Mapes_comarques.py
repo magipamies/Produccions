@@ -337,6 +337,7 @@ if not comparar:
         margin=dict(l=0, r=0, t=20, b=0),
         height=650,
         separators=",.",  # decimal amb coma, milers amb punt
+        uirevision="mapa_comarques",  # manté el zoom/posició en canviar variable, cultiu, etc.
     )
 
     st.plotly_chart(

@@ -122,8 +122,8 @@ def build_hover_extra(variables_disponibles):
 
     blocs = []
     for tipus_codi, etiqueta, unitat, format_spec in [
-        ("ha", "Superfície", "ha", ",.0f"),
-        ("t", "Producció", "t", ",.0f"),
+        ("ha", "Superfície", "ha", ",.2f"),
+        ("t", "Producció", "t", ",.2f"),
         ("t/ha", "Rendiment", "t/ha", ",.2f"),
     ]:
         linia_r = f'<span style="color:{COLOR_R}">R</span> {valor(tipus_codi, "R", format_spec)}'
@@ -333,6 +333,7 @@ if not comparar:
         margin=dict(l=0, r=0, t=20, b=0),
         height=650,
         separators=",.",
+        uirevision="mapa_municipis",  # manté el zoom/posició en canviar variable, cultiu, etc.
     )
 
     st.plotly_chart(
