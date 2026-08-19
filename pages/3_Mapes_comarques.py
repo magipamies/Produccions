@@ -160,48 +160,6 @@ HOVERLABEL = {
 }
 
 
-def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, rangs_fixos):
-    """Retorna (com a text JS) les 2 traces choroplethmap (amb dada + blanc)
-    per a una variable concreta. 'geojson' es referencia com a variable JS
-    compartida (no es duplica dins de cada trace)."""
-    df_amb = df_map[df_map[variable].notna()]
-    df_sense = df_map[df_map[variable].isna()]
-
-    grup = VARIABLE_A_GRUP.get(variable)
-    zmin, zmax = rangs_fixos.get((cultiu_sel, grup), (None, None))
-
-    trace_amb = {
-        "type": "choroplethmap",
-        "locations": df_amb["COMARCA"].tolist(),
-        "z": df_amb[variable].tolist(),
-        "zmin": zmin,
-        "zmax": zmax,
-        "featureidkey": "properties.COMARCA",
-        "customdata": df_amb[variables_disponibles].values.tolist(),
-        "colorscale": "Viridis",
-        "marker": {"line": {"color": "white", "width": 0.8}},
-        "colorbar": {"title": {"text": VARIABLE_A_UNITAT.get(variable, variable)}},
-        "hovertemplate": build_hovertemplate(variables_disponibles),
-        "hoverlabel": HOVERLABEL,
-    }
-    trace_sense = {
-        "type": "choroplethmap",
-        "locations": df_sense["COMARCA"].tolist(),
-        "z": [0] * len(df_sense),
-        "featureidkey": "properties.COMARCA",
-        "colorscale": [[0, "white"], [1, "white"]],
-        "showscale": False,
-        "marker": {"line": {"color": "lightgrey", "width": 0.8}},
-        "hovertemplate": '<b><span style="font-size:13px">%{location}</span></b><br><i>Sense dades</i><extra></extra>',
-        "hoverlabel": HOVERLABEL,
-    }
-
-    # geojson s'insereix com a referència a la variable JS "geojson", no com a JSON literal
-    js_amb = json.dumps(trace_amb)[:-1] + ', "geojson": geojson}'
-    js_sense = json.dumps(trace_sense)[:-1] + ', "geojson": geojson}'
-    return f"[{js_amb}, {js_sense}]"
-
-
 def panell_variable(key_prefix, tipus_default="Rendiment", reg_sec_default="R", empresa_default="IRTA"):
     """Panell plegable: Tipus (Superfície/Producció/Rendiment) + Reg./Secà + Font,
     tot en una sola línia. Retorna el nom real de la columna resultant,
@@ -274,32 +232,22 @@ def construeix_df_map(campanya, cultiu, comarques_sel):
     return gdf_subset.merge(df_sel, on="COMARCA", how="left")
 
 
-comparar = st.checkbox("Comparar dues variables")
-
-if not comparar:
-    # --- Mode senzill: selectors compartits, un sol mapa (com fins ara) ---
-    col1, col2 = st.columns(2)
-    with col1:
-        cultiu_sel = selector_cultiu("unic", tots_cultius)
-    with col2:
-        campanya_sel = slider_campanya("unic", totes_campanyes)
-
-    variable_sel = panell_variable("unic")
-
-    df_map = construeix_df_map(campanya_sel, cultiu_sel, totes_comarques)
-    df_amb_dada = df_map[df_map[variable_sel].notna()]
-    df_sense_dada = df_map[df_map[variable_sel].isna()]
+def dibuixa_mapa(df_map, variable, cultiu_sel, titol=None):
+    """Construeix la figura (2 capes: amb dada + blanc) per a una variable
+    concreta. Reutilitzada pel mode senzill i pel mode comparació."""
+    df_amb_dada = df_map[df_map[variable].notna()]
+    df_sense_dada = df_map[df_map[variable].isna()]
 
     fig = go.Figure()
 
     if not df_amb_dada.empty:
-        grup_sel = VARIABLE_A_GRUP.get(variable_sel)
+        grup_sel = VARIABLE_A_GRUP.get(variable)
         zmin, zmax = rangs_fixos.get((cultiu_sel, grup_sel), (None, None))
         fig.add_trace(
             go.Choroplethmap(
                 geojson=geojson,
                 locations=df_amb_dada["COMARCA"],
-                z=df_amb_dada[variable_sel],
+                z=df_amb_dada[variable],
                 zmin=zmin,
                 zmax=zmax,
                 featureidkey="properties.COMARCA",
@@ -307,7 +255,7 @@ if not comparar:
                 colorscale="Viridis",
                 marker_line_color="white",
                 marker_line_width=0.8,
-                colorbar_title=VARIABLE_A_UNITAT.get(variable_sel, variable_sel),
+                colorbar_title=VARIABLE_A_UNITAT.get(variable, variable),
                 hovertemplate=build_hovertemplate(variables_disponibles),
                 hoverlabel=HOVERLABEL,
             )
@@ -333,10 +281,28 @@ if not comparar:
         map_style="carto-positron",
         map_zoom=7.1,
         map_center=centre,
-        margin=dict(l=0, r=0, t=20, b=0),
+        margin=dict(l=0, r=0, t=30 if titol else 20, b=0),
         height=650,
         separators=",.",  # decimal amb coma, milers amb punt
+        title=titol,
     )
+    return fig, df_sense_dada
+
+
+comparar = st.checkbox("Comparar dues variables")
+
+if not comparar:
+    # --- Mode senzill: selectors compartits, un sol mapa (com fins ara) ---
+    col1, col2 = st.columns(2)
+    with col1:
+        cultiu_sel = selector_cultiu("unic", tots_cultius)
+    with col2:
+        campanya_sel = slider_campanya("unic", totes_campanyes)
+
+    variable_sel = panell_variable("unic")
+
+    df_map = construeix_df_map(campanya_sel, cultiu_sel, totes_comarques)
+    fig, df_sense_dada = dibuixa_mapa(df_map, variable_sel, cultiu_sel)
 
     st.plotly_chart(
         fig,
@@ -380,44 +346,27 @@ else:
     df_map_esq = construeix_df_map(campanya_esq, cultiu_esq, totes_comarques)
     df_map_dre = construeix_df_map(campanya_dre, cultiu_dre, totes_comarques)
 
-    traces_esq = traces_js_per_variable(
-        df_map_esq, variable_esq, variables_disponibles, cultiu_esq, rangs_fixos
+    fig_esq, df_sense_esq = dibuixa_mapa(
+        df_map_esq, variable_esq, cultiu_esq, titol=f"{variable_esq} · {cultiu_esq} · {campanya_esq}"
     )
-    traces_dre = traces_js_per_variable(
-        df_map_dre, variable_dre, variables_disponibles, cultiu_dre, rangs_fixos
+    fig_dre, df_sense_dre = dibuixa_mapa(
+        df_map_dre, variable_dre, cultiu_dre, titol=f"{variable_dre} · {cultiu_dre} · {campanya_dre}"
     )
 
-    layout_comu = {
-        "map": {"style": "carto-positron", "zoom": 7.1, "center": centre},
-        "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
-        "height": 650,
-        "hoverlabel": HOVERLABEL,
-        "separators": ",.",  # decimal amb coma, milers amb punt
+    config_mapa = {
+        "displayModeBar": True,
+        "modeBarButtonsToAdd": ["zoomInMap", "zoomOutMap", "resetViewMap"],
     }
-    layout_esq = json.dumps(
-        {**layout_comu, "title": {"text": f"{variable_esq} · {cultiu_esq} · {campanya_esq}"}}
-    )
-    layout_dre = json.dumps(
-        {**layout_comu, "title": {"text": f"{variable_dre} · {cultiu_dre} · {campanya_dre}"}}
-    )
 
-    html = f"""
-    <div style="display:flex; gap:8px;">
-      <div id="mapa_esq" style="width:50%; height:680px;"></div>
-      <div id="mapa_dre" style="width:50%; height:680px;"></div>
-    </div>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4/dist/maplibre-gl.css" />
-    <script src="https://cdn.plot.ly/plotly-3.6.0.min.js"></script>
-    <script>
-      const geojson = {json.dumps(geojson)};
+    col_mapa_esq, col_mapa_dre = st.columns(2)
+    with col_mapa_esq:
+        st.plotly_chart(fig_esq, width="stretch", config=config_mapa, key="mapa_comp_esq")
+        if not df_sense_esq.empty:
+            with st.expander(f"⚠️ {len(df_sense_esq)} comarca(es) sense dada"):
+                st.write(df_sense_esq["COMARCA"].tolist())
 
-      const config = {{
-        displayModeBar: true,
-        responsive: true,
-        modeBarButtonsToAdd: ['zoomInMap', 'zoomOutMap', 'resetViewMap'],
-      }};
-      Plotly.newPlot('mapa_esq', {traces_esq}, {layout_esq}, config);
-      Plotly.newPlot('mapa_dre', {traces_dre}, {layout_dre}, config);
-    </script>
-    """
-    st.iframe(html, height=700)
+    with col_mapa_dre:
+        st.plotly_chart(fig_dre, width="stretch", config=config_mapa, key="mapa_comp_dre")
+        if not df_sense_dre.empty:
+            with st.expander(f"⚠️ {len(df_sense_dre)} comarca(es) sense dada"):
+                st.write(df_sense_dre["COMARCA"].tolist())
