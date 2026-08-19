@@ -100,11 +100,15 @@ st.caption(f"→ `{variable_sel}`")
 
 radi = st.slider(
     "Radi de cada punt (px)",
-    min_value=5,
-    max_value=60,
-    value=25,
-    step=1,
-    help="Controla com de \"difuminada\" es veu la densitat. Més radi = taques més grans i suaus.",
+    min_value=10,
+    max_value=150,
+    value=45,
+    step=5,
+    help=(
+        "Com més gran, més es fonen els punts veïns entre si i menys es distingeix "
+        "quin municipi concret hi ha darrere de cada zona (més \"anonimitzat\"). "
+        "Amb un radi petit, tornes a veure gairebé punts individuals."
+    ),
 )
 
 # --- Filtratge i unió amb els centroides ---
