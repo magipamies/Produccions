@@ -38,17 +38,6 @@ def load_geometria(tolerance=0.0008):
 
 
 @st.cache_data
-def load_geometria_comarques(tolerance=0.001):
-    """Només per dibuixar-hi el contorn a sobre del mapa de municipis (no
-    per unir-hi dades) — per això no cal ID_MUN ni res més que la geometria."""
-    gdf = gpd.read_file("comarques_cat.geojson")
-    if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
-        gdf = gdf.to_crs(epsg=4326)
-    gdf["geometry"] = gdf["geometry"].simplify(tolerance, preserve_topology=True)
-    return gdf
-
-
-@st.cache_data
 def geometria_a_geojson(_gdf):
     return json.loads(_gdf.to_json())
 
@@ -107,9 +96,6 @@ df_muni = load_data()
 gdf_mun = load_geometria()
 geojson = geometria_a_geojson(gdf_mun)
 rangs_fixos = calcula_rangs_fixos(df_muni)
-
-gdf_com = load_geometria_comarques()
-geojson_comarques = geometria_a_geojson(gdf_com)
 
 # Centre del mapa calculat automàticament a partir de la geometria
 minx, miny, maxx, maxy = gdf_mun.total_bounds
@@ -286,23 +272,6 @@ def dibuixa_mapa(df_map, variable, cultiu_sel, titol=None):
                 hoverlabel=HOVERLABEL,
             )
         )
-
-    # Contorn de comarca: traça (no "layer" de layout) afegida DESPRÉS de les
-    # anteriors, perquè quedi per sobre del polígons opacs dels municipis en
-    # lloc d'amagar-se per sota. Fill transparent, només es veu la vora.
-    fig.add_trace(
-        go.Choroplethmap(
-            geojson=geojson_comarques,
-            locations=gdf_com["COMARCA"],
-            z=[0] * len(gdf_com),
-            featureidkey="properties.COMARCA",
-            colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
-            showscale=False,
-            marker_line_color="#444444",
-            marker_line_width=1.3,
-            hoverinfo="skip",
-        )
-    )
 
     fig.update_layout(
         map_style="carto-positron",
