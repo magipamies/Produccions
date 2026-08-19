@@ -162,7 +162,7 @@ HOVERLABEL = {
 
 
 def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, rangs_fixos):
-    """Retorna (com a text JS) les 2 traces choroplethmapbox (amb dada + blanc)
+    """Retorna (com a text JS) les 2 traces choroplethmap (amb dada + blanc)
     per a una variable concreta. 'geojson' es referencia com a variable JS
     compartida (no es duplica dins de cada trace)."""
     df_amb = df_map[df_map[variable].notna()]
@@ -172,7 +172,7 @@ def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, 
     zmin, zmax = rangs_fixos.get((cultiu_sel, grup), (None, None))
 
     trace_amb = {
-        "type": "choroplethmapbox",
+        "type": "choroplethmap",
         "locations": df_amb["COMARCA"].tolist(),
         "z": df_amb[variable].tolist(),
         "zmin": zmin,
@@ -186,7 +186,7 @@ def traces_js_per_variable(df_map, variable, variables_disponibles, cultiu_sel, 
         "hoverlabel": HOVERLABEL,
     }
     trace_sense = {
-        "type": "choroplethmapbox",
+        "type": "choroplethmap",
         "locations": df_sense["COMARCA"].tolist(),
         "z": [0] * len(df_sense),
         "featureidkey": "properties.COMARCA",
@@ -297,7 +297,7 @@ if not comparar:
         grup_sel = VARIABLE_A_GRUP.get(variable_sel)
         zmin, zmax = rangs_fixos.get((cultiu_sel, grup_sel), (None, None))
         fig.add_trace(
-            go.Choroplethmapbox(
+            go.Choroplethmap(
                 geojson=geojson,
                 locations=df_amb_dada["COMARCA"],
                 z=df_amb_dada[variable_sel],
@@ -316,7 +316,7 @@ if not comparar:
 
     if not df_sense_dada.empty:
         fig.add_trace(
-            go.Choroplethmapbox(
+            go.Choroplethmap(
                 geojson=geojson,
                 locations=df_sense_dada["COMARCA"],
                 z=[0] * len(df_sense_dada),
@@ -331,9 +331,9 @@ if not comparar:
         )
 
     fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=7.1,
-        mapbox_center=centre,
+        map_style="carto-positron",
+        map_zoom=7.1,
+        map_center=centre,
         margin=dict(l=0, r=0, t=20, b=0),
         height=650,
         separators=",.",  # decimal amb coma, milers amb punt
@@ -341,10 +341,10 @@ if not comparar:
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
         config={
             "displayModeBar": True,
-            "modeBarButtonsToAdd": ["zoomInMapbox", "zoomOutMapbox", "resetViewMapbox"],
+            "modeBarButtonsToAdd": ["zoomInMap", "zoomOutMap", "resetViewMap"],
         },
     )
 
@@ -389,7 +389,7 @@ else:
     )
 
     layout_comu = {
-        "mapbox": {"style": "carto-positron", "zoom": 7.1, "center": centre},
+        "map": {"style": "carto-positron", "zoom": 7.1, "center": centre},
         "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
         "height": 650,
         "hoverlabel": HOVERLABEL,
@@ -407,14 +407,14 @@ else:
       <div id="mapa_esq" style="width:50%; height:680px;"></div>
       <div id="mapa_dre" style="width:50%; height:680px;"></div>
     </div>
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.6.0.min.js"></script>
     <script>
       const geojson = {json.dumps(geojson)};
 
       const config = {{
         displayModeBar: true,
         responsive: true,
-        modeBarButtonsToAdd: ['zoomInMapbox', 'zoomOutMapbox', 'resetViewMapbox'],
+        modeBarButtonsToAdd: ['zoomInMap', 'zoomOutMap', 'resetViewMap'],
       }};
       Plotly.newPlot('mapa_esq', {traces_esq}, {layout_esq}, config);
       Plotly.newPlot('mapa_dre', {traces_dre}, {layout_dre}, config);

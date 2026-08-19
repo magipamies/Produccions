@@ -182,7 +182,7 @@ else:
             fig.update_xaxes(dtick="M1", tickformat="%b %Y", hoverformat="%b %Y")
 
             with cols[i % n_cols]:
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with st.expander("Veure dades filtrades"):
             st.dataframe(df_filtrat)
