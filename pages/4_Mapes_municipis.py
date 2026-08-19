@@ -333,14 +333,11 @@ if not comparar:
         margin=dict(l=0, r=0, t=20, b=0),
         height=650,
         separators=",.",
-        uirevision="mapa_municipis",  # manté el zoom/posició en canviar variable, cultiu, etc.
-        mapbox_uirevision="mapa_municipis",  # idem, específic del subplot mapbox
     )
 
     st.plotly_chart(
         fig,
         use_container_width=True,
-        key="mapa_municipis_unic",
         config={
             "displayModeBar": True,
             "modeBarButtonsToAdd": ["zoomInMapbox", "zoomOutMapbox", "resetViewMapbox"],
