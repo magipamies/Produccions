@@ -88,8 +88,11 @@ def rasteritza(campanya, cultiu, variable, mida_px=900):
     transparent. És la part cara (recórrer ~950 polígons), per això es
     cacheja a part del difuminat."""
     df_sel = df_muni[(df_muni["CAMPANYA"] == campanya) & (df_muni["CULTIU"] == cultiu)]
-    df_sel = df_sel.groupby("ID_MUN", as_index=False)[variable].sum(min_count=1)
+    df_sel = df_sel.groupby(["ID_MUN", "MUNICIPI"], as_index=False)[variable].sum(min_count=1)
     df_map = gdf_mun.merge(df_sel, on="ID_MUN", how="left")
+    # Si algun municipi no té dada per aquesta selecció, MUNICIPI queda buit
+    # després del merge; ho omplim amb el nom de la geometria (NOMMUNI).
+    df_map["MUNICIPI"] = df_map["MUNICIPI"].fillna(df_map["NOMMUNI"])
 
     grup = VARIABLE_A_GRUP.get(variable)
     zmin, zmax = rangs_fixos.get((cultiu, grup), (0.0, 1.0))
