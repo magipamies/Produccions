@@ -275,7 +275,7 @@ def construeix_df_map(campanya, cultiu, comarques_sel):
     return gdf_subset.merge(df_sel, on="COMARCA", how="left")
 
 
-comparar = st.checkbox("Comparar dues variables costat a costat")
+comparar = st.checkbox("Comparar dues variables")
 
 if not comparar:
     # --- Mode senzill: selectors compartits, un sol mapa (com fins ara) ---
