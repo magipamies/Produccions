@@ -9,6 +9,7 @@ import json
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
+import numpy as np
 import geopandas as gpd
 import plotly.graph_objects as go
 
@@ -68,9 +69,11 @@ VARIABLE_A_UNITAT = {v: unitat for unitat, cols in UNITATS.items() for v in cols
 
 
 @st.cache_data
-def calcula_rangs_fixos(df):
-    """Min/max per CULTIU + grup de variable, agafant TOTES les campanyes.
-    Així el rang de color no canvia en canviar d'any i es poden comparar."""
+def calcula_rangs_fixos(df, percentil_baix=5, percentil_alt=95):
+    """Rang de color (percentil baix/alt) per CULTIU + grup de variable, agafant
+    TOTES les campanyes. Fem servir percentils en lloc de min/max perquè un
+    valor atípic (una comarca/any excepcional) no aixafi el contrast visual
+    de la resta del mapa."""
     rangs = {}
     for cultiu, df_c in df.groupby("CULTIU"):
         for grup, cols in GRUPS_VARIABLES.items():
@@ -78,7 +81,8 @@ def calcula_rangs_fixos(df):
             valors = df_c[cols_presents].to_numpy().flatten()
             valors = valors[~pd.isna(valors)]
             if len(valors) > 0:
-                rangs[(cultiu, grup)] = (float(valors.min()), float(valors.max()))
+                baix, alt = np.percentile(valors, [percentil_baix, percentil_alt])
+                rangs[(cultiu, grup)] = (float(baix), float(alt))
     return rangs
 
 
