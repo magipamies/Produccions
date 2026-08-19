@@ -338,11 +338,13 @@ if not comparar:
         height=650,
         separators=",.",  # decimal amb coma, milers amb punt
         uirevision="mapa_comarques",  # manté el zoom/posició en canviar variable, cultiu, etc.
+        mapbox_uirevision="mapa_comarques",  # idem, específic del subplot mapbox
     )
 
     st.plotly_chart(
         fig,
         use_container_width=True,
+        key="mapa_comarques_unic",
         config={
             "displayModeBar": True,
             "modeBarButtonsToAdd": ["zoomInMapbox", "zoomOutMapbox", "resetViewMapbox"],
