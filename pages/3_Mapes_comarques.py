@@ -7,7 +7,6 @@ datetime:17/8/2026 12:36
 import json
 
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import geopandas as gpd
@@ -420,4 +419,4 @@ else:
       Plotly.newPlot('mapa_dre', {traces_dre}, {layout_dre}, config);
     </script>
     """
-    components.html(html, height=700, scrolling=False)
+    st.iframe(html, height=700)
