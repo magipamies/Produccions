@@ -216,6 +216,10 @@ def selector_cultiu(key_prefix, tots_cultius):
 
 
 st.title("Mapa de comarques")
+st.caption(
+    "Distribució espacial de les prediccions de l'IRTA i les dades del "
+    "DARPA, per comarca. Es poden comparar dues variables costat a costat."
+)
 
 variables_disponibles = [
     c for c in df2.columns if c not in ["COMARCA", "CULTIU", "CAMPANYA"]

@@ -42,7 +42,11 @@ df3 = load_data()
 # DATE com a datetime real (format dia/mes/any)
 df3["DATE"] = pd.to_datetime(df3["DATE"], format="%d/%m/%Y")
 
-st.title("Evolució mensual de variables agrícoles per comarca i cultiu")
+st.title("Evolució mensual de les prediccions de l'IRTA (campanya 2026)")
+st.caption(
+    "Com han anat evolucionant, mes a mes, les prediccions de collita de "
+    "l'IRTA durant la campanya 2026, per comarca i cultiu."
+)
 
 # --- Construcció del nom de variable: Tipus + Regadiu/Secà ---
 TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}

@@ -206,6 +206,10 @@ def selector_cultiu(key_prefix, tots_cultius):
 
 
 st.title("Mapa de municipis")
+st.caption(
+    "El mateix tipus de mapa, a escala de municipi — només amb les "
+    "prediccions de l'IRTA, ja que el DARPA no publica a aquest nivell de detall."
+)
 
 variables_disponibles = [
     c for c in df_muni.columns if c not in ["COMARCA", "ID_MUN", "MUNICIPI", "CULTIU", "CAMPANYA"]
@@ -285,7 +289,7 @@ def dibuixa_mapa(df_map, variable, cultiu_sel, titol=None):
     return fig, df_sense_dada
 
 
-comparar = st.checkbox("Comparar dues variables costat a costat")
+comparar = st.checkbox("Comparar dues variables")
 
 if not comparar:
     # --- Mode senzill: selectors compartits, un sol mapa ---

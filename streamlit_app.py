@@ -1,12 +1,14 @@
 import streamlit as st
 
-st.set_page_config(page_title="Producció Agrícola de Catalunya", page_icon="🌾", layout="wide")
+st.set_page_config(page_title="Prediccions de collita IRTA vs DARPA", page_icon="🌾", layout="wide")
 
-st.title("🌾 Producció Agrícola de Catalunya")
+st.title("🌾 Prediccions de collita: IRTA vs DARPA")
 st.markdown(
-    "Explora l'evolució de la superfície, la producció i el rendiment agrícola "
-    "a Catalunya, per comarca, municipi i cultiu — comparant Regadiu/Secà i, "
-    "segons la vista, també la font de la dada (IRTA/DARPA)."
+    "Aquesta aplicació compara les **prediccions de collita** que fa l'IRTA "
+    "(Blat, Ordi, Blat de Moro i Ametller) amb les **estadístiques oficials** "
+    "que publica el DARPA (Departament d'Agricultura de la Generalitat de "
+    "Catalunya). Per a la campanya del **2026**, encara només hi ha "
+    "disponibles les prediccions de l'IRTA."
 )
 st.markdown("Tria una de les vistes de sota per començar:")
 
@@ -28,16 +30,16 @@ targeta(
     "pages/1_Evolucio_per_comarca.py",
     "📈",
     "Evolució per comarca",
-    "Gràfics d'evolució anual (superfície, producció, rendiment) per comarca "
-    "i cultiu, un gràfic per cultiu, comparant Regadiu/Secà i IRTA/DARPA.",
+    "Compara any a any les prediccions de l'IRTA amb les dades del DARPA "
+    "(superfície, producció, rendiment), per comarca i cultiu.",
 )
 targeta(
     col2,
     "pages/2_Evolucio_mensual.py",
     "📅",
-    "Evolució mensual",
-    "El mateix tipus d'evolució, però dins d'una campanya concreta, mes a mes "
-    "en lloc d'any a any.",
+    "Evolució mensual de les prediccions 2026",
+    "Com han anat evolucionant, mes a mes, les prediccions que ha fet l'IRTA "
+    "durant la campanya 2026, per comarca i cultiu.",
 )
 
 col3, col4 = st.columns(2)
@@ -46,15 +48,16 @@ targeta(
     "pages/3_Mapa_comarques.py",
     "🗺️",
     "Mapa de comarques",
-    "Mapa interactiu de Catalunya per comarca, amb la variable, el cultiu i la "
-    "campanya que triïs. Es poden comparar dues variables costat a costat.",
+    "Distribució espacial de les dades a nivell de comarca, comparant IRTA i "
+    "DARPA. Es poden veure dues variables costat a costat.",
 )
 targeta(
     col4,
     "pages/4_Mapa_municipis.py",
     "📍",
     "Mapa de municipis",
-    "El mateix mapa, a escala de municipi (~950), amb dades només d'IRTA.",
+    "El mateix tipus de mapa, a escala de municipi (~950) — aquí només amb "
+    "les prediccions de l'IRTA, ja que el DARPA no publica a aquest detall.",
 )
 
 col5, _ = st.columns(2)
@@ -69,4 +72,14 @@ targeta(
 )
 
 st.divider()
-st.caption("Font de les dades: IRTA / DARPA. Dades de producció agrícola de Catalunya.")
+
+st.markdown("##### Fonts de les dades")
+st.markdown(
+    "- **DARPA**: [Estadístiques definitives de conreus]"
+    "(https://agricultura.gencat.cat/ca/departament/observatori-agroambiental/"
+    "estadistiques/agricultura/estadistiques-definitives-conreus/), "
+    "Departament d'Agricultura de la Generalitat de Catalunya.\n"
+    "- **IRTA**: prediccions generades pel programa de recerca "
+    "[Ús eficient de l'aigua en agricultura]"
+    "(https://www.irta.cat/programa-de-recerca/us-eficient-de-laigua-en-agricultura/)."
+)

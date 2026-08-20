@@ -42,6 +42,10 @@ df2 = load_data()
 df2["CAMPANYA"] = pd.to_datetime(df2["CAMPANYA"], format="%Y")
 
 st.title("Evolució de variables agrícoles per comarca i cultiu")
+st.caption(
+    "Compara any a any les prediccions de l'IRTA amb les estadístiques del "
+    "DARPA, per comarca i cultiu."
+)
 
 # --- Construcció del nom de variable: Tipus + Font (IRTA/DARPA) + Regadiu/Secà ---
 TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
