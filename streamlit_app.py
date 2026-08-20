@@ -16,14 +16,14 @@ st.markdown(
     "(https://www.irta.cat/programa-de-recerca/us-eficient-de-laigua-en-agricultura/)."
 )
 
-st.markdown("#### 🌱 Què hi trobaràs")
+st.markdown("#### Què hi trobaràs")
 col_cultius, col_variables = st.columns(2)
 with col_cultius:
     st.markdown("**Cultius**")
-    st.markdown("🌾 Blat &nbsp;·&nbsp; 🌾 Ordi &nbsp;·&nbsp; 🌽 Blat de Moro &nbsp;·&nbsp; 🌳 Ametller")
+    st.markdown("Blat &nbsp;·&nbsp; Ordi &nbsp;·&nbsp; Blat de Moro &nbsp;·&nbsp; Ametller")
 with col_variables:
     st.markdown("**Variables** (per Regadiu / Secà)")
-    st.markdown("📐 Superfície (ha) &nbsp;·&nbsp; 🌾 Producció (t) &nbsp;·&nbsp; 📊 Rendiment (t/ha)")
+    st.markdown("Superfície (ha) &nbsp;·&nbsp; Producció (t) &nbsp;·&nbsp; Rendiment (t/ha)")
 
 st.markdown("Tria una de les vistes de sota per començar:")
 
