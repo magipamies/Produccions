@@ -4,7 +4,7 @@ st.set_page_config(page_title="Prediccions de collita IRTA", page_icon="🌾", l
 
 st.title("Prediccions de collita IRTA")
 st.markdown(
-    "Aquesta aplicació permer visualitzar les **prediccions de collita** que fa l'IRTA "
+    "Aquesta aplicació permet visualitzar les **prediccions de collita** que fa l'IRTA "
     "(Blat, Ordi, Blat de Moro i Ametller) i comparar-les amb les **estadístiques oficials** "
     "que publica el DARPA (Departament d'Agricultura, Ramaderia, Pesca i Alimentació de la "
     "Generalitat de Catalunya). Per a la campanya del **2026** només hi ha "
@@ -77,9 +77,9 @@ st.markdown("##### Fonts de les dades")
 st.markdown(
     "- **IRTA**: prediccions generades pel programa de recerca "
     "[Ús eficient de l'aigua en agricultura]"
-    "(https://www.irta.cat/programa-de-recerca/us-eficient-de-laigua-en-agricultura/)."
+    "(https://www.irta.cat/programa-de-recerca/us-eficient-de-laigua-en-agricultura/).\n"
     "- **DARPA**: [Estadístiques definitives de conreus]"
     "(https://agricultura.gencat.cat/ca/departament/observatori-agroambiental/"
     "estadistiques/agricultura/estadistiques-definitives-conreus/), "
-    "Departament d'Agricultura, Ramaderia, Pesca i Alimentació de la Generalitat de Catalunya.\n"
+    "Departament d'Agricultura, Ramaderia, Pesca i Alimentació de la Generalitat de Catalunya."
 )
