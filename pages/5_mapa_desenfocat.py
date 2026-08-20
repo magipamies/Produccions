@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+Cada municipi conserva el seu color real (com al mapa de polígons), però es rasteritza a imatge i s'hi aplica un
+difuminat gaussià per suavitzar les vores — a diferència d'un mapa de densitat, els valors NO es barregen amb els
+municipis veïns.
+
+Es pot modificar el nivell de difuminat amb:
+BLUR_FIX = 2  # desenfocament fix, en px
 
 author: magipamies
 datetime:19/8/2026 15:16
@@ -233,12 +239,9 @@ CONFIG_MAPA = {
     "modeBarButtonsToAdd": ["zoomInMap", "zoomOutMap", "resetViewMap"],
 }
 
-st.title("🧪 Mapa difuminat de municipis (prova)")
+st.title("Mapa de municipis difuminat (prova)")
 st.caption(
-    "Cada municipi conserva el seu color real (com al mapa de polígons), però "
-    "es rasteritza a imatge i s'hi aplica un difuminat gaussià per suavitzar "
-    "les vores — a diferència d'un mapa de densitat, els valors NO es "
-    "barregen amb els municipis veïns."
+    "Variables de producció a nivell municipal"
 )
 
 comparar = st.checkbox("Comparar dues variables costat a costat")
@@ -310,7 +313,7 @@ else:
                 step=1,
                 key="campanya_esq_dens",
             )
-        sub3, sub4 = st.columns(2)
+        sub3, sub4, sub_c1 = st.columns(3)
         with sub3:
             tipus_esq = st.segmented_control(
                 "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_esq_dens"
@@ -323,9 +326,11 @@ else:
             )
             if regsec_esq is None:
                 regsec_esq = "R"
+        with sub_c1:
+            st.write("")  # petit espaiat per alinear amb els segmented_control
+            mostra_comarques_esq = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_esq_dens")
         variable_esq = nom_variable(TIPUS_CODIS[tipus_esq], regsec_esq)
         st.caption(f"→ `{variable_esq}`")
-        mostra_comarques_esq = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_esq_dens")
 
     with col_b:
         st.markdown("**Mapa dret**")
@@ -345,7 +350,7 @@ else:
                 step=1,
                 key="campanya_dre_dens",
             )
-        sub7, sub8 = st.columns(2)
+        sub7, sub8, sub_c2 = st.columns(3)
         with sub7:
             tipus_dre = st.segmented_control(
                 "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dre_dens"
@@ -358,9 +363,11 @@ else:
             )
             if regsec_dre is None:
                 regsec_dre = "S"
+        with sub_c2:
+            st.write("")  # petit espaiat per alinear amb els segmented_control
+            mostra_comarques_dre = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_dre_dens")
         variable_dre = nom_variable(TIPUS_CODIS[tipus_dre], regsec_dre)
         st.caption(f"→ `{variable_dre}`")
-        mostra_comarques_dre = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_dre_dens")
 
     fig_esq, n_sense_esq = dibuixa_mapa(
         campanya_esq, cultiu_esq, variable_esq,
