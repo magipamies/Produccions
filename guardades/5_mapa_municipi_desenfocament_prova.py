@@ -41,6 +41,16 @@ def geometria_a_geojson(_gdf):
     return json.loads(_gdf.to_json())
 
 
+@st.cache_data
+def load_geometria_comarques(tolerance=0.001):
+    """Només per dibuixar-hi el contorn a sobre (no per unir-hi dades)."""
+    gdf = gpd.read_file("comarques.geojson")
+    if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    gdf["geometry"] = gdf["geometry"].simplify(tolerance, preserve_topology=True)
+    return gdf
+
+
 # --- Construcció del nom de variable: Tipus + Regadiu/Secà (només IRTA) ---
 TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
 
@@ -190,7 +200,14 @@ def dibuixa_mapa(campanya, cultiu, variable, titol=None):
         map_zoom=7.1,
         map_center=centre,
         map_layers=[
-            dict(sourcetype="image", source=data_uri, coordinates=coords_geo, opacity=0.9)
+            dict(sourcetype="image", source=data_uri, coordinates=coords_geo, opacity=0.9),
+            dict(
+                sourcetype="geojson",
+                source=geojson_comarques,
+                type="line",
+                color="#333333",
+                line=dict(width=1.3),
+            ),
         ],
         margin=dict(l=0, r=0, t=30 if titol else 20, b=0),
         height=650,
@@ -204,6 +221,9 @@ df_muni = load_data()
 gdf_mun = load_geometria()
 geojson = geometria_a_geojson(gdf_mun)
 rangs_fixos = calcula_rangs_fixos(df_muni)
+
+gdf_com = load_geometria_comarques()
+geojson_comarques = geometria_a_geojson(gdf_com)
 
 minx, miny, maxx, maxy = gdf_mun.total_bounds
 centre = {"lat": (miny + maxy) / 2, "lon": (minx + maxx) / 2}
