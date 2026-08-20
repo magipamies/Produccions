@@ -239,7 +239,7 @@ CONFIG_MAPA = {
 
 st.title("🧪 Mapa difuminat de municipis (prova)")
 st.caption(
-    "Cada municipi conserva el seu color real (com al mapa de polígons), però "
+    "Cadap municipi conserva el seu color real (com al mapa de polígons), però "
     "es rasteritza a imatge i s'hi aplica un difuminat gaussià per suavitzar "
     "les vores — a diferència d'un mapa de densitat, els valors NO es "
     "barregen amb els municipis veïns."
