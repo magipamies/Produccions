@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.set_page_config(page_title="Evolució per comarca", layout="wide")
+st.set_page_config(page_title="Comparativa per comarca", layout="wide")
 
 
 def colors_aleatoris(n):
@@ -41,10 +41,10 @@ df2 = load_data()
 # CAMPANYA com a datetime (només any, format %Y)
 df2["CAMPANYA"] = pd.to_datetime(df2["CAMPANYA"], format="%Y")
 
-st.title("Evolució de variables agrícoles per comarca i cultiu")
+st.title("Comparativa de les prediccions anuals")
 st.caption(
     "Compara any a any les prediccions de l'IRTA amb les estadístiques del "
-    "DARPA, per comarca i cultiu."
+    "DARPA, per comarca, cultiu i regadiu/secà."
 )
 
 # --- Construcció del nom de variable: Tipus + Font (IRTA/DARPA) + Regadiu/Secà ---
