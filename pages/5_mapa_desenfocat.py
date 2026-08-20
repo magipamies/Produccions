@@ -159,7 +159,7 @@ def img_a_data_uri(img):
 BLUR_FIX = 2  # desenfocament fix, en px
 
 
-def dibuixa_mapa(campanya, cultiu, variable, titol=None):
+def dibuixa_mapa(campanya, cultiu, variable, titol=None, mostra_comarques=False):
     """Rasteritza + difumina, i construeix la figura final. La traça de
     Plotly fa servir l'escala de color REAL (Viridis, zmin/zmax) perquè es
     vegi la colorbar, però amb el fill invisible (opacity=0): el que es veu
@@ -188,20 +188,23 @@ def dibuixa_mapa(campanya, cultiu, variable, titol=None):
         )
     )
 
-    fig.update_layout(
-        map_style="carto-positron",
-        map_zoom=7.1,
-        map_center=centre,
-        map_layers=[
-            dict(sourcetype="image", source=data_uri, coordinates=coords_geo, opacity=0.9),
+    capes = [dict(sourcetype="image", source=data_uri, coordinates=coords_geo, opacity=0.9)]
+    if mostra_comarques:
+        capes.append(
             dict(
                 sourcetype="geojson",
                 source=geojson_comarques,
                 type="line",
                 color="rgba(120,120,120,0.55)",
                 line=dict(width=1.0),
-            ),
-        ],
+            )
+        )
+
+    fig.update_layout(
+        map_style="carto-positron",
+        map_zoom=7.1,
+        map_center=centre,
+        map_layers=capes,
         margin=dict(l=0, r=0, t=30 if titol else 20, b=0),
         height=650,
         separators=",.",
@@ -258,7 +261,7 @@ if not comparar:
             key="campanya_dens",
         )
 
-    col3, col4 = st.columns(2)
+    col3, col4, col5 = st.columns([1, 1, 1])
     with col3:
         tipus_label = st.segmented_control(
             "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dens"
@@ -271,11 +274,16 @@ if not comparar:
         )
         if reg_sec is None:
             reg_sec = "R"
+    with col5:
+        st.write("")  # petit espaiat per alinear amb els segmented_control
+        mostra_comarques = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_dens")
 
     variable_sel = nom_variable(TIPUS_CODIS[tipus_label], reg_sec)
     st.caption(f"→ `{variable_sel}`")
 
-    fig, n_sense_dada = dibuixa_mapa(campanya_sel, cultiu_sel, variable_sel)
+    fig, n_sense_dada = dibuixa_mapa(
+        campanya_sel, cultiu_sel, variable_sel, mostra_comarques=mostra_comarques
+    )
     st.plotly_chart(fig, width="stretch", config=CONFIG_MAPA, key="mapa_dens_unic")
 
     if n_sense_dada:
@@ -317,6 +325,7 @@ else:
                 regsec_esq = "R"
         variable_esq = nom_variable(TIPUS_CODIS[tipus_esq], regsec_esq)
         st.caption(f"→ `{variable_esq}`")
+        mostra_comarques_esq = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_esq_dens")
 
     with col_b:
         st.markdown("**Mapa dret**")
@@ -351,12 +360,17 @@ else:
                 regsec_dre = "S"
         variable_dre = nom_variable(TIPUS_CODIS[tipus_dre], regsec_dre)
         st.caption(f"→ `{variable_dre}`")
+        mostra_comarques_dre = st.checkbox("Mostra comarques", value=False, key="mostra_comarques_dre_dens")
 
     fig_esq, n_sense_esq = dibuixa_mapa(
-        campanya_esq, cultiu_esq, variable_esq, titol=f"{variable_esq} · {cultiu_esq} · {campanya_esq}"
+        campanya_esq, cultiu_esq, variable_esq,
+        titol=f"{variable_esq} · {cultiu_esq} · {campanya_esq}",
+        mostra_comarques=mostra_comarques_esq,
     )
     fig_dre, n_sense_dre = dibuixa_mapa(
-        campanya_dre, cultiu_dre, variable_dre, titol=f"{variable_dre} · {cultiu_dre} · {campanya_dre}"
+        campanya_dre, cultiu_dre, variable_dre,
+        titol=f"{variable_dre} · {cultiu_dre} · {campanya_dre}",
+        mostra_comarques=mostra_comarques_dre,
     )
 
     col_mapa_esq, col_mapa_dre = st.columns(2)
