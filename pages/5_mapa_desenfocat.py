@@ -37,7 +37,11 @@ def load_geometria(tolerance=0.0008):
 
 
 @st.cache_data
-def geometria_a_geojson(_gdf):
+def geometria_a_geojson(_gdf, clau=""):
+    # 'clau' és necessària perquè la cache distingeixi aquesta crida d'altres
+    # (per exemple, comarques vs municipis): _gdf, en portar '_', no compta
+    # per la cache, i sense una clau diferent totes les crides compartirien
+    # el mateix resultat cachejat.
     return json.loads(_gdf.to_json())
 
 
@@ -154,12 +158,6 @@ def img_a_data_uri(img):
 
 BLUR_FIX = 2  # desenfocament fix, en px
 
-HOVERLABEL = {
-    "bgcolor": "white",
-    "bordercolor": "#dddddd",
-    "font": {"size": 12, "family": "Arial, sans-serif", "color": "#222222"},
-}
-
 
 def dibuixa_mapa(campanya, cultiu, variable, titol=None):
     """Rasteritza + difumina, i construeix la figura final. La traça de
@@ -182,16 +180,11 @@ def dibuixa_mapa(campanya, cultiu, variable, titol=None):
             zmin=zmin,
             zmax=zmax,
             featureidkey="properties.ID_MUN",
-            customdata=df_amb_dada[["MUNICIPI", variable]],
             colorscale="Viridis",
             showscale=True,
             colorbar_title=VARIABLE_A_UNITAT.get(variable, variable),
             marker=dict(opacity=0, line=dict(width=0)),  # fill invisible: es veu la imatge de sota
-            hovertemplate=(
-                '<b><span style="font-size:13px">%{customdata[0]}</span></b>'
-                "<br>Valor: %{customdata[1]:,.2f}<extra></extra>"
-            ),
-            hoverlabel=HOVERLABEL,
+            hoverinfo="skip",  # sense popup per municipi
         )
     )
 
@@ -219,11 +212,11 @@ def dibuixa_mapa(campanya, cultiu, variable, titol=None):
 
 df_muni = load_data()
 gdf_mun = load_geometria()
-geojson = geometria_a_geojson(gdf_mun)
+geojson = geometria_a_geojson(gdf_mun, clau="municipis")
 rangs_fixos = calcula_rangs_fixos(df_muni)
 
 gdf_com = load_geometria_comarques()
-geojson_comarques = geometria_a_geojson(gdf_com)
+geojson_comarques = geometria_a_geojson(gdf_com, clau="comarques")
 
 minx, miny, maxx, maxy = gdf_mun.total_bounds
 centre = {"lat": (miny + maxy) / 2, "lon": (minx + maxx) / 2}
