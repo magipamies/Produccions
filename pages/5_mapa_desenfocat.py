@@ -41,6 +41,16 @@ def geometria_a_geojson(_gdf):
     return json.loads(_gdf.to_json())
 
 
+@st.cache_data
+def load_geometria_comarques(tolerance=0.001):
+    """Només per dibuixar-hi el contorn a sobre (no per unir-hi dades)."""
+    gdf = gpd.read_file("comarques_cat.geojson")
+    if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    gdf["geometry"] = gdf["geometry"].simplify(tolerance, preserve_topology=True)
+    return gdf
+
+
 # --- Construcció del nom de variable: Tipus + Regadiu/Secà (només IRTA) ---
 TIPUS_CODIS = {"Superfície": "ha", "Producció": "t", "Rendiment": "t/ha"}
 
@@ -142,13 +152,90 @@ def img_a_data_uri(img):
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+BLUR_FIX = 2  # desenfocament fix, en px
+
+HOVERLABEL = {
+    "bgcolor": "white",
+    "bordercolor": "#dddddd",
+    "font": {"size": 12, "family": "Arial, sans-serif", "color": "#222222"},
+}
+
+
+def dibuixa_mapa(campanya, cultiu, variable, titol=None):
+    """Rasteritza + difumina, i construeix la figura final. La traça de
+    Plotly fa servir l'escala de color REAL (Viridis, zmin/zmax) perquè es
+    vegi la colorbar, però amb el fill invisible (opacity=0): el que es veu
+    és la imatge difuminada de sota; la traça només serveix pel popup i la
+    colorbar."""
+    img_base, coords_geo, df_map, n_sense_dada, zmin, zmax = rasteritza(campanya, cultiu, variable)
+    img_final = img_base.filter(ImageFilter.GaussianBlur(radius=BLUR_FIX))
+    data_uri = img_a_data_uri(img_final)
+
+    df_amb_dada = df_map[df_map[variable].notna()]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Choroplethmap(
+            geojson=geojson,
+            locations=df_amb_dada["ID_MUN"],
+            z=df_amb_dada[variable],
+            zmin=zmin,
+            zmax=zmax,
+            featureidkey="properties.ID_MUN",
+            customdata=df_amb_dada[["MUNICIPI", variable]],
+            colorscale="Viridis",
+            showscale=True,
+            colorbar_title=VARIABLE_A_UNITAT.get(variable, variable),
+            marker=dict(opacity=0, line=dict(width=0)),  # fill invisible: es veu la imatge de sota
+            hovertemplate=(
+                '<b><span style="font-size:13px">%{customdata[0]}</span></b>'
+                "<br>Valor: %{customdata[1]:,.2f}<extra></extra>"
+            ),
+            hoverlabel=HOVERLABEL,
+        )
+    )
+
+    fig.update_layout(
+        map_style="carto-positron",
+        map_zoom=7.1,
+        map_center=centre,
+        map_layers=[
+            dict(sourcetype="image", source=data_uri, coordinates=coords_geo, opacity=0.9),
+            dict(
+                sourcetype="geojson",
+                source=geojson_comarques,
+                type="line",
+                color="#333333",
+                line=dict(width=1.3),
+            ),
+        ],
+        margin=dict(l=0, r=0, t=30 if titol else 20, b=0),
+        height=650,
+        separators=",.",
+        title=titol,
+    )
+    return fig, n_sense_dada
+
+
 df_muni = load_data()
 gdf_mun = load_geometria()
 geojson = geometria_a_geojson(gdf_mun)
 rangs_fixos = calcula_rangs_fixos(df_muni)
 
+gdf_com = load_geometria_comarques()
+geojson_comarques = geometria_a_geojson(gdf_com)
+
 minx, miny, maxx, maxy = gdf_mun.total_bounds
 centre = {"lat": (miny + maxy) / 2, "lon": (minx + maxx) / 2}
+
+tots_cultius = sorted(df_muni["CULTIU"].dropna().unique())
+default_cultiu = "BLAT" if "BLAT" in tots_cultius else tots_cultius[0]
+totes_campanyes = sorted(df_muni["CAMPANYA"].dropna().unique(), reverse=True)
+
+CONFIG_MAPA = {
+    "displayModeBar": True,
+    "modeBarButtonsToAdd": ["zoomInMap", "zoomOutMap", "resetViewMap"],
+}
 
 st.title("🧪 Mapa difuminat de municipis (prova)")
 st.caption(
@@ -158,107 +245,133 @@ st.caption(
     "barregen amb els municipis veïns."
 )
 
-col1, col2 = st.columns(2)
-with col1:
-    tots_cultius = sorted(df_muni["CULTIU"].dropna().unique())
-    default_cultiu = "BLAT" if "BLAT" in tots_cultius else tots_cultius[0]
-    cultiu_sel = st.segmented_control("Cultiu", options=tots_cultius, default=default_cultiu)
-    if cultiu_sel is None:
-        cultiu_sel = default_cultiu
-with col2:
-    totes_campanyes = sorted(df_muni["CAMPANYA"].dropna().unique(), reverse=True)
-    campanya_sel = st.slider(
-        "Campanya",
-        min_value=int(min(totes_campanyes)),
-        max_value=int(max(totes_campanyes)),
-        value=int(max(totes_campanyes)),
-        step=1,
-    )
+comparar = st.checkbox("Comparar dues variables costat a costat")
 
-col3, col4 = st.columns(2)
-with col3:
-    tipus_label = st.segmented_control(
-        "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment"
-    )
-    if tipus_label is None:
-        tipus_label = "Rendiment"
-with col4:
-    reg_sec = st.segmented_control("Regadiu / Secà", options=["R", "S"], default="R")
-    if reg_sec is None:
-        reg_sec = "R"
-
-variable_sel = nom_variable(TIPUS_CODIS[tipus_label], reg_sec)
-st.caption(f"→ `{variable_sel}`")
-
-blur = st.slider(
-    "Desenfocament (px)",
-    min_value=0,
-    max_value=25,
-    value=8,
-    step=1,
-    help="Com més gran, més se suavitzen les vores i menys es distingeix el límit exacte de cada municipi.",
-)
-
-# Rasterització (cara, cachejada) + desenfocament (barat, es recalcula lliurement)
-img_base, coords_geo, df_map, n_sense_dada, zmin, zmax = rasteritza(
-    campanya_sel, cultiu_sel, variable_sel
-)
-img_final = img_base.filter(ImageFilter.GaussianBlur(radius=blur)) if blur > 0 else img_base
-data_uri = img_a_data_uri(img_final)
-
-fig = go.Figure()
-
-# Traça transparent NOMÉS per al popup (hover), amb els valors reals —
-# el que es VEU és la imatge difuminada, però el hover segueix sent precís.
-df_amb_dada = df_map[df_map[variable_sel].notna()]
-fig.add_trace(
-    go.Choroplethmap(
-        geojson=geojson,
-        locations=df_amb_dada["ID_MUN"],
-        z=df_amb_dada[variable_sel],
-        featureidkey="properties.ID_MUN",
-        customdata=df_amb_dada[["MUNICIPI", variable_sel]],
-        colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
-        showscale=False,
-        marker_line_width=0,
-        hovertemplate=(
-            '<b><span style="font-size:13px">%{customdata[0]}</span></b>'
-            "<br>Valor: %{customdata[1]:,.2f}<extra></extra>"
-        ),
-        hoverlabel=dict(
-            bgcolor="white", bordercolor="#dddddd",
-            font=dict(size=12, family="Arial, sans-serif", color="#222222"),
-        ),
-    )
-)
-
-fig.update_layout(
-    map_style="carto-positron",
-    map_zoom=7.1,
-    map_center=centre,
-    map_layers=[
-        dict(
-            sourcetype="image",
-            source=data_uri,
-            coordinates=coords_geo,
-            opacity=0.9,
+if not comparar:
+    col1, col2 = st.columns(2)
+    with col1:
+        cultiu_sel = st.segmented_control(
+            "Cultiu", options=tots_cultius, default=default_cultiu, key="cultiu_dens"
         )
-    ],
-    margin=dict(l=0, r=0, t=20, b=0),
-    height=650,
-    separators=",.",
-)
+        if cultiu_sel is None:
+            cultiu_sel = default_cultiu
+    with col2:
+        campanya_sel = st.slider(
+            "Campanya",
+            min_value=int(min(totes_campanyes)),
+            max_value=int(max(totes_campanyes)),
+            value=int(max(totes_campanyes)),
+            step=1,
+            key="campanya_dens",
+        )
 
-st.plotly_chart(
-    fig,
-    width="stretch",
-    config={
-        "displayModeBar": True,
-        "modeBarButtonsToAdd": ["zoomInMap", "zoomOutMap", "resetViewMap"],
-    },
-)
+    col3, col4 = st.columns(2)
+    with col3:
+        tipus_label = st.segmented_control(
+            "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dens"
+        )
+        if tipus_label is None:
+            tipus_label = "Rendiment"
+    with col4:
+        reg_sec = st.segmented_control(
+            "Regadiu / Secà", options=["R", "S"], default="R", key="regsec_dens"
+        )
+        if reg_sec is None:
+            reg_sec = "R"
 
-st.caption(f"Escala de color: {zmin:,.2f} – {zmax:,.2f} ({VARIABLE_A_UNITAT.get(variable_sel, '')})")
+    variable_sel = nom_variable(TIPUS_CODIS[tipus_label], reg_sec)
+    st.caption(f"→ `{variable_sel}`")
 
-if n_sense_dada:
-    st.caption(f"⚠️ {n_sense_dada} municipi(s) sense dada per aquesta selecció (queden transparents).")
+    fig, n_sense_dada = dibuixa_mapa(campanya_sel, cultiu_sel, variable_sel)
+    st.plotly_chart(fig, width="stretch", config=CONFIG_MAPA, key="mapa_dens_unic")
+
+    if n_sense_dada:
+        st.caption(f"⚠️ {n_sense_dada} municipi(s) sense dada per aquesta selecció (queden transparents).")
+
+else:
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        st.markdown("**Mapa esquerre**")
+        sub1, sub2 = st.columns(2)
+        with sub1:
+            cultiu_esq = st.segmented_control(
+                "Cultiu", options=tots_cultius, default=default_cultiu, key="cultiu_esq_dens"
+            )
+            if cultiu_esq is None:
+                cultiu_esq = default_cultiu
+        with sub2:
+            campanya_esq = st.slider(
+                "Campanya",
+                min_value=int(min(totes_campanyes)),
+                max_value=int(max(totes_campanyes)),
+                value=int(max(totes_campanyes)),
+                step=1,
+                key="campanya_esq_dens",
+            )
+        sub3, sub4 = st.columns(2)
+        with sub3:
+            tipus_esq = st.segmented_control(
+                "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_esq_dens"
+            )
+            if tipus_esq is None:
+                tipus_esq = "Rendiment"
+        with sub4:
+            regsec_esq = st.segmented_control(
+                "Regadiu / Secà", options=["R", "S"], default="R", key="regsec_esq_dens"
+            )
+            if regsec_esq is None:
+                regsec_esq = "R"
+        variable_esq = nom_variable(TIPUS_CODIS[tipus_esq], regsec_esq)
+        st.caption(f"→ `{variable_esq}`")
+
+    with col_b:
+        st.markdown("**Mapa dret**")
+        sub5, sub6 = st.columns(2)
+        with sub5:
+            cultiu_dre = st.segmented_control(
+                "Cultiu", options=tots_cultius, default=default_cultiu, key="cultiu_dre_dens"
+            )
+            if cultiu_dre is None:
+                cultiu_dre = default_cultiu
+        with sub6:
+            campanya_dre = st.slider(
+                "Campanya",
+                min_value=int(min(totes_campanyes)),
+                max_value=int(max(totes_campanyes)),
+                value=int(max(totes_campanyes)),
+                step=1,
+                key="campanya_dre_dens",
+            )
+        sub7, sub8 = st.columns(2)
+        with sub7:
+            tipus_dre = st.segmented_control(
+                "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dre_dens"
+            )
+            if tipus_dre is None:
+                tipus_dre = "Rendiment"
+        with sub8:
+            regsec_dre = st.segmented_control(
+                "Regadiu / Secà", options=["R", "S"], default="S", key="regsec_dre_dens"
+            )
+            if regsec_dre is None:
+                regsec_dre = "S"
+        variable_dre = nom_variable(TIPUS_CODIS[tipus_dre], regsec_dre)
+        st.caption(f"→ `{variable_dre}`")
+
+    fig_esq, n_sense_esq = dibuixa_mapa(
+        campanya_esq, cultiu_esq, variable_esq, titol=f"{variable_esq} · {cultiu_esq} · {campanya_esq}"
+    )
+    fig_dre, n_sense_dre = dibuixa_mapa(
+        campanya_dre, cultiu_dre, variable_dre, titol=f"{variable_dre} · {cultiu_dre} · {campanya_dre}"
+    )
+
+    col_mapa_esq, col_mapa_dre = st.columns(2)
+    with col_mapa_esq:
+        st.plotly_chart(fig_esq, width="stretch", config=CONFIG_MAPA, key="mapa_dens_comp_esq")
+        if n_sense_esq:
+            st.caption(f"⚠️ {n_sense_esq} municipi(s) sense dada")
+    with col_mapa_dre:
+        st.plotly_chart(fig_dre, width="stretch", config=CONFIG_MAPA, key="mapa_dens_comp_dre")
+        if n_sense_dre:
+            st.caption(f"⚠️ {n_sense_dre} municipi(s) sense dada")
