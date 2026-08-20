@@ -264,7 +264,7 @@ if not comparar:
             key="campanya_dens",
         )
 
-    col3, col4, col5 = st.columns([1, 1, 1])
+    col3, col4, col5 = st.columns([2, 1, 1.3])
     with col3:
         tipus_label = st.segmented_control(
             "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dens"
@@ -313,7 +313,7 @@ else:
                 step=1,
                 key="campanya_esq_dens",
             )
-        sub3, sub4, sub_c1 = st.columns(3)
+        sub3, sub4, sub_c1 = st.columns([2, 1, 1.3])
         with sub3:
             tipus_esq = st.segmented_control(
                 "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_esq_dens"
@@ -350,7 +350,7 @@ else:
                 step=1,
                 key="campanya_dre_dens",
             )
-        sub7, sub8, sub_c2 = st.columns(3)
+        sub7, sub8, sub_c2 = st.columns([2, 1, 1.3])
         with sub7:
             tipus_dre = st.segmented_control(
                 "Tipus de variable", options=list(TIPUS_CODIS.keys()), default="Rendiment", key="tipus_dre_dens"
