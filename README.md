@@ -1,10 +1,12 @@
+🇬🇧 *[Read this in English](README.en.md)*
+
 # 🌾 Produccions
 
 Aplicació de predicció de la producció agrícola de **blat, ordi, blat de moro i ametller** a Catalunya.
 
 ## 📋 Descripció
 
-Aquesta aplicació permet consultar les prediccions de collita elaborades per l'**IRTA** (Institut de Recerca i Tecnologia Agroalimentàries) i comparar-les amb les dades oficials publicades pel **DARPA** (Departament d'Acció Climàtica, Alimentació i Agenda Rural).
+Aquesta aplicació permet consultar les prediccions de collita elaborades per l'[**IRTA**](https://www.irta.cat/programa-de-recerca/us-eficient-de-laigua-en-agricultura/) (Institut de Recerca i Tecnologia Agroalimentàries) i comparar-les amb les dades oficials publicades pel [**DARPA**](https://agricultura.gencat.cat/ca/departament/observatori-agroambiental/estadistiques/agricultura/estadistiques-definitives-conreus/) (Departament d'Acció Climàtica, Alimentació i Agenda Rural).
 
 > ⚠️ **Nota:** Per a la campanya del 2026 només hi ha disponibles les prediccions de l'IRTA, ja que les dades oficials del DARPA encara no han estat publicades.
 
