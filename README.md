@@ -26,12 +26,12 @@ L'aplicació web permet:
 | Blat de moro | IRTA / DARPA |
 | Ametller | IRTA / DARPA |
 
-## 📄 Llicència
-
-Aquest projecte està sota la llicència [MIT](LICENSE), © 2026 Programa Ús eficient de l'aigua en agricultura, IRTA.
-
 ## 📈 Visualització alternativa
 
 Si només vols explorar les dades de forma interactiva sense obrir l'aplicació completa, també estan disponibles a Flourish:
 
 [![Visualització Flourish](https://public.flourish.studio/story/3726433/thumbnail)](https://public.flourish.studio/story/3726433/)
+
+## 📄 Llicència
+
+Aquest projecte està sota la llicència [MIT](LICENSE), © 2026 Programa Ús eficient de l'aigua en agricultura, IRTA.
