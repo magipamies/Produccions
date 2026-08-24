@@ -17,12 +17,6 @@ L'aplicació web permet:
 - Comparar les prediccions de l'IRTA amb les dades oficials del DARPA
 - Explorar l'evolució de la producció al llarg del temps
 
-## 📈 Visualització alternativa
-
-Si només vols explorar les dades de forma interactiva sense obrir l'aplicació completa, també estan disponibles a Flourish:
-
-[![Visualització Flourish](https://public.flourish.studio/story/3726433/thumbnail)](https://public.flourish.studio/story/3726433/)
-
 ## 🌱 Cultius inclosos
 
 | Cultiu | Font de dades |
@@ -34,4 +28,10 @@ Si només vols explorar les dades de forma interactiva sense obrir l'aplicació 
 
 ## 📄 Llicència
 
-*(Afegeir aquí la llicència del projecte)*
+Aquest projecte està sota la llicència [MIT](LICENSE), © 2026 Programa Ús eficient de l'aigua en agricultura, IRTA.
+
+## 📈 Visualització alternativa
+
+Si només vols explorar les dades de forma interactiva sense obrir l'aplicació completa, també estan disponibles a Flourish:
+
+[![Visualització Flourish](https://public.flourish.studio/story/3726433/thumbnail)](https://public.flourish.studio/story/3726433/)
